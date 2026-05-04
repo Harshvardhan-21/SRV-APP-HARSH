@@ -1071,7 +1071,7 @@ export function GetStartedScreen({ onComplete }: GetStartedScreenProps) {
                   >
                     <AppIcon
                       name="refer"
-                      size={isCompactScreen ? 17 : 19}
+                      size={isCompactScreen ? 14 : 16}
                       color="#FFFFFF"
                       strokeWidth={1.9}
                     />
@@ -1461,8 +1461,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   dealerChannelCard: {
-    marginBottom: 10,
-    borderRadius: 16,
+    marginBottom: 6,
+    borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(139,92,246,0.2)',
@@ -1470,8 +1470,8 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   dealerChannelCardCompact: {
-    marginBottom: 8,
-    borderRadius: 14,
+    marginBottom: 5,
+    borderRadius: 12,
   },
   dealerChannelCardSheen: {
     ...StyleSheet.absoluteFillObject,
@@ -1501,74 +1501,74 @@ const styles = StyleSheet.create({
   },
   dealerChannelCopyCol: {
     flex: 1,
-    paddingVertical: 10,
-    paddingRight: 12,
-    paddingLeft: 10,
+    paddingVertical: 7,
+    paddingRight: 10,
+    paddingLeft: 8,
     alignItems: 'center',
   },
   dealerChannelCopyColCompact: {
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
   dealerChannelIconRow: {
-    marginBottom: 4,
-  },
-  dealerChannelIconRowCompact: {
     marginBottom: 3,
   },
+  dealerChannelIconRowCompact: {
+    marginBottom: 2,
+  },
   dealerChannelIconGlow: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     ...createShadow({ color: '#5B21B6', offsetY: 2, blur: 6, opacity: 0.18, elevation: 3 }),
   },
   dealerChannelIconGlowCompact: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
   },
   dealerChannelEyebrow: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '900',
-    letterSpacing: 1.8,
+    letterSpacing: 1.6,
     textTransform: 'uppercase',
     textAlign: 'center',
-    marginBottom: 4,
-  },
-  dealerChannelEyebrowCompact: {
-    fontSize: 8,
-    letterSpacing: 1.5,
     marginBottom: 3,
   },
+  dealerChannelEyebrowCompact: {
+    fontSize: 7,
+    letterSpacing: 1.3,
+    marginBottom: 2,
+  },
   dealerChannelHeadline: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '900',
     textAlign: 'center',
-    lineHeight: 21,
-    marginBottom: 6,
+    lineHeight: 19,
+    marginBottom: 4,
     letterSpacing: -0.25,
     paddingHorizontal: 2,
   },
   dealerChannelHeadlineCompact: {
-    fontSize: 14,
-    lineHeight: 19,
-    marginBottom: 5,
+    fontSize: 13,
+    lineHeight: 17,
+    marginBottom: 3,
   },
   dealerMsgDividerWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    maxWidth: 260,
-    marginBottom: 6,
-    gap: 8,
+    maxWidth: 240,
+    marginBottom: 4,
+    gap: 6,
     paddingHorizontal: 2,
   },
   dealerMsgDividerWrapCompact: {
-    maxWidth: 220,
-    marginBottom: 5,
-    gap: 6,
+    maxWidth: 200,
+    marginBottom: 3,
+    gap: 5,
   },
   dealerMsgDividerLine: {
     flex: 1,
@@ -1582,18 +1582,18 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   dealerChannelBody: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
     fontStyle: 'italic',
     paddingHorizontal: 0,
-    letterSpacing: 0.12,
+    letterSpacing: 0.1,
   },
   dealerChannelBodyCompact: {
-    fontSize: 11,
-    lineHeight: 16,
-    letterSpacing: 0.08,
+    fontSize: 10,
+    lineHeight: 14,
+    letterSpacing: 0.06,
   },
   // User slide hero section
   userHeroSection: {
