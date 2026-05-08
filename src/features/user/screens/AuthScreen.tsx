@@ -152,7 +152,8 @@ export function UserAuthScreen({
     if (!lPhone.trim()) { Alert.alert('', tx('Please enter your phone number')); return; }
     setLoading(true);
     try {
-      await authApi.login({ phone: lPhone.trim(), password: lPwd.trim(), role });
+      const res = await authApi.login({ phone: lPhone.trim(), password: lPwd.trim(), role });
+      (globalThis as typeof globalThis & { __srvLoginUser?: unknown }).__srvLoginUser = res.user;
       onAuthenticated(role, { passwordConfigured: !!lPwd, passwordValue: lPwd });
     } catch (e: any) { Alert.alert(tx('Login Failed'), e?.message ?? tx('Check your credentials')); }
     finally { setLoading(false); }
@@ -163,7 +164,8 @@ export function UserAuthScreen({
     if (!sPhone.trim()) { Alert.alert('', tx('Please enter your phone number')); return; }
     setLoading(true);
     try {
-      await authApi.register({ name: sName.trim(), phone: sPhone.trim(), email: sEmail.trim(), password: sPwd.trim(), role });
+      const res = await authApi.register({ name: sName.trim(), phone: sPhone.trim(), email: sEmail.trim(), password: sPwd.trim(), role });
+      (globalThis as typeof globalThis & { __srvLoginUser?: unknown }).__srvLoginUser = res.user;
       onAuthenticated(role, { passwordConfigured: !!sPwd, passwordValue: sPwd });
     } catch (e: any) { Alert.alert(tx('Signup Failed'), e?.message ?? tx('Something went wrong')); }
     finally { setLoading(false); }

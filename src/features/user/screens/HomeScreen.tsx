@@ -853,6 +853,7 @@ export function HomeScreen({
             name: authUser?.name ?? '',
             phone: authUser?.phone ?? '',
             electrician_code: authUser?.electricianCode ?? '',
+            user_code: authUser?.userCode ?? '',
             dealer_code: authUser?.dealerCode ?? '',
             dealer_name: authUser?.dealerName ?? '',
             dealer_town: authUser?.dealerTown ?? '',

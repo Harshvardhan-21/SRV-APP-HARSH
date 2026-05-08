@@ -206,15 +206,16 @@ export function HomeScreen({
             profile={{
               name: authUser?.name ?? '',
               phone: authUser?.phone ?? '',
-              dealer_code: '',
-              town: authUser?.town ?? '',
+              dealer_code: authUser?.dealerCode ?? '',
+              counterboy_code: authUser?.counterboyCode ?? '',
+              town: authUser?.city ?? '',
               district: authUser?.district ?? '',
               state: authUser?.state ?? '',
               address: authUser?.address ?? '',
               electrician_code: authUser?.electricianCode ?? '',
-              dealer_name: '',
-              dealer_town: '',
-              dealer_phone: '',
+              dealer_name: authUser?.dealerName ?? '',
+              dealer_town: authUser?.dealerTown ?? '',
+              dealer_phone: authUser?.dealerPhone ?? '',
             }}
             role="counterboy"
             photoUri={profilePhotoUri}

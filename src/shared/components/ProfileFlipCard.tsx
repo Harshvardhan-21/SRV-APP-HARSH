@@ -25,6 +25,8 @@ interface Profile {
   phone?: string;
   dealer_code?: string;
   electrician_code?: string;
+  user_code?: string;
+  counterboy_code?: string;
   dealer_name?: string;
   dealer_town?: string;
   dealer_phone?: string;
@@ -137,7 +139,13 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
     .slice(0, 2);
 
   const isDealer = role === 'dealer';
-  const code = isDealer ? profile?.dealer_code : profile?.electrician_code;
+  const code = isDealer
+    ? profile?.dealer_code
+    : role === 'user'
+    ? profile?.user_code
+    : role === 'counterboy'
+    ? profile?.counterboy_code
+    : profile?.electrician_code;
   const qrValue = code || profile?.phone || 'SRV';
   const qrUrl =
     'https://quickchart.io/qr?text=' +
@@ -226,9 +234,15 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
     isDealer
       ? dealerLocation
       : formatTranslatedLocation([profile?.town, profile?.state]) || fallbackText;
-  const codeLabel = isDealer ? tx('Dealer Code') : tx('Electrician Code');
-  const backThirdLabel = isDealer ? tx('Address') : tx('Phone Number');
-  const backThirdValue = isDealer ? dealerAddress : dealerPhone;
+  const codeLabel = isDealer
+    ? tx('Dealer Code')
+    : role === 'user'
+    ? tx('Customer ID')
+    : role === 'counterboy'
+    ? tx('Counter Boy ID')
+    : tx('Electrician Code');
+  const backThirdLabel = isDealer || role === 'user' ? tx('Address') : tx('Phone Number');
+  const backThirdValue = isDealer ? dealerAddress : role === 'user' ? dealerAddress : dealerPhone;
   const exportName =
     (profile?.name || dealerName || fallbackText)
       .toLowerCase()
@@ -406,7 +420,13 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.roleText, darkMode ? styles.roleTextDark : null]}>
-                      {role === 'dealer' ? t('dealerPartner') : t('electricianPartner')}
+                      {role === 'dealer'
+                        ? t('dealerPartner')
+                        : role === 'user'
+                        ? tx('Customer Account')
+                        : role === 'counterboy'
+                        ? tx('Counter Boy Account')
+                        : t('electricianPartner')}
                     </Text>
                     <Text style={styles.nameText}>{profile?.name || fallbackText}</Text>
                     <Text style={[styles.phoneText, darkMode ? styles.phoneTextDark : null]}>
@@ -453,7 +473,7 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
               <View style={styles.backContent}>
                 <View style={styles.backLeft}>
                   <Text style={[styles.backHeading, darkMode ? styles.backHeadingDark : null]}>
-                    {tx(role === 'dealer' ? 'Business Details' : 'Connected Dealer')}
+                    {tx(role === 'dealer' ? 'Business Details' : role === 'user' ? 'Account Details' : 'Connected Dealer')}
                   </Text>
                   <View style={styles.metaStack}>
                     <DetailPill label="Name" value={dealerName} compact />

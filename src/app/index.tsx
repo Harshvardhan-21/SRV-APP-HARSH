@@ -244,14 +244,24 @@ function AppContent() {
         }));
       }
 
-      const realUser = (globalThis as any).__srvLoginUser;
+      const realUser = (globalThis as typeof globalThis & { __srvLoginUser?: typeof user }).__srvLoginUser;
       if (realUser) {
         login(realUser, role);
-        if (role === 'electrician') {
+        if (role === 'electrician' || role === 'user' || role === 'counterboy') {
           setElectricianRewardPoints(realUser.totalPoints ?? 0);
           setElectricianRewardScans(realUser.totalScans ?? 0);
         }
-        delete (globalThis as any).__srvLoginUser;
+        delete (globalThis as typeof globalThis & { __srvLoginUser?: typeof user }).__srvLoginUser;
+      } else {
+        void (async () => {
+          const storedProfile = await storage.getUserProfile<typeof user extends infer T ? Exclude<T, null> : never>();
+          if (!storedProfile) return;
+          login(storedProfile, role);
+          if (role === 'electrician' || role === 'user' || role === 'counterboy') {
+            setElectricianRewardPoints(storedProfile.totalPoints ?? 0);
+            setElectricianRewardScans(storedProfile.totalScans ?? 0);
+          }
+        })();
       }
 
       setCurrentRole(role);
@@ -788,4 +798,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
