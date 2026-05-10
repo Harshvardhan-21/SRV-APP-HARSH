@@ -205,27 +205,27 @@ const ROLE_THEME: Record<string, {
     storeIconWrapBg: '#FFF0DA',
   },
   counterboy: {
-    heroGradient: ['#18345B', '#355C95', '#E18D4E'],
-    heroShadow: '#193357',
-    eyebrowColor: '#FDE3B8',
-    screenBg: '#F4EFE8',
-    cardBorder: '#E9DED3',
-    cardShadow: '#734E2A',
-    sectionEyebrow: '#B57846',
-    sectionIconBg: '#FFF1E2',
-    actionTileBg: '#FFF7F0',
-    actionTileBorder: '#F1E0CF',
-    timelineCardBg: '#FBF5EF',
-    timelineCardBorder: '#EEE0D5',
-    emptyStateBg: '#FFF8F2',
-    emptyStateBorder: '#F0E1D3',
-    emptyIconBg: '#FBE9D8',
-    emptyTitleColor: '#B04D2E',
-    paginationBtnBg: '#B57846',
-    paginationBtnDisabledBg: '#E9DED3',
-    paginationBtnDisabledText: '#B57846',
-    paginationInfoBg: '#FBF5EF',
-    storeIconWrapBg: '#FFF0DA',
+    heroGradient: ['#B91C1C', '#E8453C', '#FF8A80'],
+    heroShadow: '#991B1B',
+    eyebrowColor: '#FFE4E6',
+    screenBg: '#FFF6F6',
+    cardBorder: '#FECACA',
+    cardShadow: '#B91C1C',
+    sectionEyebrow: '#C2413A',
+    sectionIconBg: '#FFF1F2',
+    actionTileBg: '#FFF5F5',
+    actionTileBorder: '#FECACA',
+    timelineCardBg: '#FFF8F8',
+    timelineCardBorder: '#FEE2E2',
+    emptyStateBg: '#FFF5F5',
+    emptyStateBorder: '#FECACA',
+    emptyIconBg: '#FEE2E2',
+    emptyTitleColor: '#C2413A',
+    paginationBtnBg: '#E8453C',
+    paginationBtnDisabledBg: '#FECACA',
+    paginationBtnDisabledText: '#B91C1C',
+    paginationInfoBg: '#FFF1F2',
+    storeIconWrapBg: '#FFE4E6',
   },
 };
 
@@ -341,6 +341,21 @@ export function WalletScreen({
   ];
 
   const actions = isDealer ? dealerActions : electricianActions;
+  const walletTitle = isDealer
+    ? 'SRV Dealer Wallet'
+    : role === 'user'
+    ? 'SRV User Wallet'
+    : role === 'counterboy'
+    ? 'SRV Counter Boy Wallet'
+    : 'SRV Premium Wallet';
+  const walletSubtitle = isDealer
+    ? 'Dealer wallet for schemes, bank payouts, and dealer bonus tracking.'
+    : role === 'user'
+    ? 'Your rewards dashboard for redemptions and loyalty growth.'
+    : role === 'counterboy'
+    ? 'Counter boy wallet for transfers, payouts, and complete reward activity.'
+    : 'Premium rewards dashboard for redemptions, transfers, and loyalty growth.';
+  const quickActionTitle = isDealer ? 'Manage dealer payouts' : role === 'counterboy' ? 'Manage counter rewards' : 'Move your wallet faster';
 
   return (
     <ScrollView
@@ -368,19 +383,13 @@ export function WalletScreen({
         </View>
 
         <Text style={[styles.eyebrow, { color: t.eyebrowColor }]}>
-          {tx(isDealer ? 'SRV Dealer Wallet' : role === 'user' ? 'SRV User Wallet' : 'SRV Premium Wallet')}
+          {tx(walletTitle)}
         </Text>
         <Text style={styles.heroTitle}>
           {totalPoints} {tx(isDealer ? 'Dealer Bonus Points' : 'Total Points')}
         </Text>
         <Text style={styles.heroSub}>
-          {tx(
-            isDealer
-              ? 'Dealer wallet for schemes, bank payouts, and dealer bonus tracking.'
-              : role === 'user'
-              ? 'Your rewards dashboard for redemptions and loyalty growth.'
-              : 'Premium rewards dashboard for redemptions, transfers, and loyalty growth.'
-          )}
+          {tx(walletSubtitle)}
         </Text>
 
         <View style={styles.heroStats}>
@@ -408,7 +417,7 @@ export function WalletScreen({
               {tx('Quick Actions')}
             </Text>
             <Text style={[styles.sectionTitle, darkMode ? styles.sectionTitleDark : null]}>
-              {tx(isDealer ? 'Manage dealer payouts' : 'Move your wallet faster')}
+              {tx(quickActionTitle)}
             </Text>
           </View>
           <View style={[styles.sectionIconWrap, { backgroundColor: darkMode ? '#1E293B' : t.sectionIconBg }]}>
