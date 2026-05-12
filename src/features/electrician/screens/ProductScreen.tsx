@@ -6,6 +6,8 @@ import {
   FlatList,
   Image,
   Pressable,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -39,12 +41,13 @@ const CAT_COLORS: Record<string, { gradient: [string, string, string]; scanBg: s
   mcb:          { gradient: ['#4A6FA5','#6B8FC7','#B8CCE8'], scanBg: '#EEF4FF', scanText: '#2D5FA0', cardGradient: ['#F8FAFF','#EBF2FF','#D8E8FF'], iconBg: '#DDE9F8' },
   busbar:       { gradient: ['#8B6914','#C49A2A','#E8CC7A'], scanBg: '#FDF8EC', scanText: '#7A5A10', cardGradient: ['#FFFDF5','#FDF5DC','#F8EAB8'], iconBg: '#F5E8C0' },
   exhaust:      { gradient: ['#2E7D5E','#4CAF85','#90D4B8'], scanBg: '#EDF8F3', scanText: '#1E6B4A', cardGradient: ['#F5FDF9','#E2F5EC','#C8EDD9'], iconBg: '#C8EDD9' },
+  axialfan:     { gradient: ['#2E7D5E','#4CAF85','#90D4B8'], scanBg: '#EDF8F3', scanText: '#1E6B4A', cardGradient: ['#F5FDF9','#E2F5EC','#C8EDD9'], iconBg: '#C8EDD9' },
   led:          { gradient: ['#8B6914','#C49A2A','#E8CC7A'], scanBg: '#FDF8EC', scanText: '#7A5A10', cardGradient: ['#FFFDF5','#FDF5DC','#F8EAB8'], iconBg: '#F5E8C0' },
-  changeover:   { gradient: ['#6B3FA0','#9B6FD0','#C9A8F0'], scanBg: '#F5EEFF', scanText: '#5A2E90', cardGradient: ['#FBF8FF','#EEE4FF','#DDD0FF'], iconBg: '#E0D0F8' },
+  changeover:   { gradient: ['#6F879F','#93A8BE','#D9E1EA'], scanBg: '#F5F8FB', scanText: '#4A637B', cardGradient: ['#FAFBFD','#E9EEF5','#D5DEE9'], iconBg: '#E5ECF4' },
   mainswitch:   { gradient: ['#C0392B','#E74C3C','#F1948A'], scanBg: '#FFF0EF', scanText: '#A93226', cardGradient: ['#FFF8F8','#FFE8E6','#FFD5D2'], iconBg: '#FFD5D2' },
   louver:       { gradient: ['#2E7D5E','#4CAF85','#90D4B8'], scanBg: '#EDF8F3', scanText: '#1E6B4A', cardGradient: ['#F5FDF9','#E2F5EC','#C8EDD9'], iconBg: '#C8EDD9' },
-  axialfan:     { gradient: ['#2E7D5E','#4CAF85','#90D4B8'], scanBg: '#EDF8F3', scanText: '#1E6B4A', cardGradient: ['#F5FDF9','#E2F5EC','#C8EDD9'], iconBg: '#C8EDD9' },
   conduit:      { gradient: ['#6F879F','#93A8BE','#D9E1EA'], scanBg: '#F5F8FB', scanText: '#4A637B', cardGradient: ['#FAFBFD','#E9EEF5','#D5DEE9'], iconBg: '#E5ECF4' },
+  pvcpipe:      { gradient: ['#6F879F','#93A8BE','#D9E1EA'], scanBg: '#F5F8FB', scanText: '#4A637B', cardGradient: ['#FAFBFD','#E9EEF5','#D5DEE9'], iconBg: '#E5ECF4' },
   stabilizer:   { gradient: ['#4A6FA5','#6B8FC7','#B8CCE8'], scanBg: '#EEF4FF', scanText: '#2D5FA0', cardGradient: ['#F8FAFF','#EBF2FF','#D8E8FF'], iconBg: '#DDE9F8' },
   junction:     { gradient: ['#6F879F','#93A8BE','#D9E1EA'], scanBg: '#F5F8FB', scanText: '#4A637B', cardGradient: ['#FAFBFD','#E9EEF5','#D5DEE9'], iconBg: '#E5ECF4' },
 };
@@ -222,23 +225,59 @@ function FilterIcon({ size = 18, color = '#1C1E2E' }: { size?: number; color?: s
 
 // ── Animated floating product image ──────────────────────────────────────────
 const AnimatedProductImage = memo(function AnimatedProductImage({ uri, size }: { uri: string; size: number }) {
-  const floatY = useRef(new Animated.Value(0)).current;
+  const floatY   = useRef(new Animated.Value(0)).current;
   const imgScale = useRef(new Animated.Value(1)).current;
+  const rotateZ  = useRef(new Animated.Value(0)).current;
+  const shimmerX = useRef(new Animated.Value(-1)).current;
 
   useEffect(() => {
+    // Float up-down
     Animated.loop(Animated.sequence([
-      Animated.timing(floatY, withWebSafeNativeDriver({ toValue: -8, duration: 1600, easing: Easing.inOut(Easing.sin) })),
-      Animated.timing(floatY, withWebSafeNativeDriver({ toValue: 0, duration: 1600, easing: Easing.inOut(Easing.sin) })),
+      Animated.timing(floatY, withWebSafeNativeDriver({ toValue: -10, duration: 1800, easing: Easing.inOut(Easing.sin) })),
+      Animated.timing(floatY, withWebSafeNativeDriver({ toValue: 0,   duration: 1800, easing: Easing.inOut(Easing.sin) })),
     ])).start();
+
+    // Breathing scale
     Animated.loop(Animated.sequence([
-      Animated.timing(imgScale, withWebSafeNativeDriver({ toValue: 1.06, duration: 2200, easing: Easing.inOut(Easing.ease) })),
-      Animated.timing(imgScale, withWebSafeNativeDriver({ toValue: 1, duration: 2200, easing: Easing.inOut(Easing.ease) })),
+      Animated.timing(imgScale, withWebSafeNativeDriver({ toValue: 1.08, duration: 2400, easing: Easing.inOut(Easing.ease) })),
+      Animated.timing(imgScale, withWebSafeNativeDriver({ toValue: 1,    duration: 2400, easing: Easing.inOut(Easing.ease) })),
     ])).start();
-  }, [floatY, imgScale]);
+
+    // Gentle sway
+    Animated.loop(Animated.sequence([
+      Animated.timing(rotateZ, withWebSafeNativeDriver({ toValue: 1,  duration: 2600, easing: Easing.inOut(Easing.sin) })),
+      Animated.timing(rotateZ, withWebSafeNativeDriver({ toValue: -1, duration: 2600, easing: Easing.inOut(Easing.sin) })),
+      Animated.timing(rotateZ, withWebSafeNativeDriver({ toValue: 0,  duration: 2600, easing: Easing.inOut(Easing.sin) })),
+    ])).start();
+
+    // Shimmer sweep every 3.5s
+    const runShimmer = () => {
+      shimmerX.setValue(-1);
+      Animated.timing(shimmerX, withWebSafeNativeDriver({ toValue: 2, duration: 900, easing: Easing.inOut(Easing.ease) }))
+        .start(({ finished }) => { if (finished) setTimeout(runShimmer, 3500); });
+    };
+    const t = setTimeout(runShimmer, 800);
+    return () => clearTimeout(t);
+  }, [floatY, imgScale, rotateZ, shimmerX]);
+
+  const swayDeg = rotateZ.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-2deg', '0deg', '2deg'] });
+  const shimmerTX = shimmerX.interpolate({ inputRange: [-1, 2], outputRange: [-size * 1.5, size * 3] });
 
   return (
-    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Animated.View style={{ transform: [{ translateY: floatY }, { scale: imgScale }] }}>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+      {/* Shimmer sweep over image */}
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          top: 0, bottom: 0,
+          width: size * 0.35,
+          backgroundColor: 'rgba(255,255,255,0.32)',
+          transform: [{ translateX: shimmerTX }, { rotate: '20deg' }],
+          zIndex: 2,
+        }}
+      />
+      <Animated.View style={{ transform: [{ translateY: floatY }, { scale: imgScale }, { rotate: swayDeg }] }}>
         <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="contain" />
       </Animated.View>
     </View>
@@ -295,55 +334,104 @@ const ProductCard = memo(function ProductCard({
   product, cardW, onScan, darkMode,
 }: { product: UiProduct; cardW: number; onScan: () => void; darkMode: boolean }) {
   const cc = catColor(product.category);
+
+  // Entry animation
+  const entryY  = useRef(new Animated.Value(60)).current;
+  const entryOp = useRef(new Animated.Value(0)).current;
+
+  // Press 3D
   const pressScale = useRef(new Animated.Value(1)).current;
-  const tiltX = useRef(new Animated.Value(0)).current;
+  const tiltX      = useRef(new Animated.Value(0)).current;  // rotateY on press
+  const tiltY      = useRef(new Animated.Value(0)).current;  // rotateX on press
+  const glowOp     = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(entryY,  withWebSafeNativeDriver({ toValue: 0, duration: 520, easing: Easing.out(Easing.back(1.4)) })),
+      Animated.timing(entryOp, withWebSafeNativeDriver({ toValue: 1, duration: 400, easing: Easing.out(Easing.ease) })),
+    ]).start();
+  }, [entryY, entryOp]);
 
   const onIn = useCallback(() => {
     Animated.parallel([
-      Animated.spring(pressScale, withWebSafeNativeDriver({ toValue: 0.96, tension: 100, friction: 6 })),
-      Animated.spring(tiltX, withWebSafeNativeDriver({ toValue: 1, tension: 100, friction: 6 })),
+      Animated.spring(pressScale, withWebSafeNativeDriver({ toValue: 0.94, tension: 120, friction: 6 })),
+      Animated.spring(tiltX,      withWebSafeNativeDriver({ toValue: 1,    tension: 120, friction: 6 })),
+      Animated.spring(tiltY,      withWebSafeNativeDriver({ toValue: 1,    tension: 120, friction: 6 })),
+      Animated.timing(glowOp,     withWebSafeNativeDriver({ toValue: 1, duration: 150, easing: Easing.out(Easing.ease) })),
     ]).start();
-  }, [pressScale, tiltX]);
+  }, [pressScale, tiltX, tiltY, glowOp]);
 
   const onOut = useCallback(() => {
     Animated.parallel([
-      Animated.spring(pressScale, withWebSafeNativeDriver({ toValue: 1, tension: 100, friction: 6 })),
-      Animated.spring(tiltX, withWebSafeNativeDriver({ toValue: 0, tension: 100, friction: 6 })),
+      Animated.spring(pressScale, withWebSafeNativeDriver({ toValue: 1, tension: 90, friction: 6 })),
+      Animated.spring(tiltX,      withWebSafeNativeDriver({ toValue: 0, tension: 90, friction: 6 })),
+      Animated.spring(tiltY,      withWebSafeNativeDriver({ toValue: 0, tension: 90, friction: 6 })),
+      Animated.timing(glowOp,     withWebSafeNativeDriver({ toValue: 0, duration: 200, easing: Easing.in(Easing.ease) })),
     ]).start();
-  }, [pressScale, tiltX]);
+  }, [pressScale, tiltX, tiltY, glowOp]);
 
-  const rotate = tiltX.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '4deg'] });
-  const imgSize = cardW + 4;
+  const rotateY = tiltX.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '8deg'] });
+  const rotateX = tiltY.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-5deg'] });
+
+  // Bigger image — fills almost full card width
+  const imgSize   = cardW + 35;
+  const imgHeight = cardW + 60;
 
   return (
     <Pressable onPressIn={onIn} onPressOut={onOut}>
-      <Animated.View style={[
-        styles.card,
-        darkMode ? styles.cardDark : null,
-        { width: cardW, height: cardW * 1.72, transform: [{ scale: pressScale }, { perspective: 900 }, { rotateY: rotate }] },
-      ]}>
-        {/* Image zone */}
-        <LinearGradient colors={cc.cardGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.imgZone, { height: cardW + 18 }]}>
-          {product.badge != null && (
-            <View style={[styles.badge, { backgroundColor: cc.scanText }]}>
-              <Text style={styles.badgeText}>{product.badge}</Text>
+      <Animated.View style={{ opacity: entryOp, transform: [{ translateY: entryY }] }}>
+
+        {/* Coloured glow shadow on press */}
+        <Animated.View style={[
+          styles.cardGlow,
+          { width: cardW, backgroundColor: cc.scanText + '33', opacity: glowOp },
+        ]} />
+
+        <Animated.View style={[
+          styles.card,
+          darkMode ? styles.cardDark : null,
+          {
+            width: cardW,
+            height: cardW * 1.82,
+            transform: [
+              { scale: pressScale },
+              { perspective: 800 },
+              { rotateY },
+              { rotateX },
+            ],
+          },
+        ]}>
+          {/* Image zone — taller, bigger image */}
+          <LinearGradient
+            colors={['#FFFFFF', '#FFFFFF', '#FFFFFF']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            style={[styles.imgZone, { height: imgHeight }]}
+          >
+            {product.badge != null && (
+              <View style={[styles.badge, { backgroundColor: cc.scanText }]}>
+                <Text style={styles.badgeText}>{product.badge}</Text>
+              </View>
+            )}
+            <View style={[styles.ptsBadge, { borderColor: cc.scanText + '44' }]}>
+              <Text style={[styles.ptsBadgeText, { color: cc.scanText }]}>+{product.points} pts</Text>
             </View>
-          )}
-          <View style={[styles.ptsBadge, { borderColor: cc.scanText + '44' }]}>
-            <Text style={[styles.ptsBadgeText, { color: cc.scanText }]}>+{product.points} pts</Text>
+            <AnimatedProductImage uri={product.imageUrl} size={imgSize} />
+          </LinearGradient>
+
+          {/* Thin accent line */}
+          <View style={[styles.accentLine, { backgroundColor: cc.scanText }]} />
+
+          {/* Info zone */}
+          <View style={[styles.infoZone, darkMode ? styles.infoZoneDark : null]}>
+            <Text style={[styles.productName, darkMode ? styles.productNameDark : null]} numberOfLines={1}>{product.name}</Text>
+            <Text style={[styles.productSub,  darkMode ? styles.productSubDark  : null]} numberOfLines={2}>{product.sub}</Text>
+            <View style={styles.infoSpacer} />
+            <TouchableOpacity onPress={onScan} style={[styles.scanBtn, { backgroundColor: cc.scanBg }]} activeOpacity={0.8}>
+              <ScanIcon size={15} color={cc.scanText} />
+              <Text style={[styles.scanBtnText, { color: cc.scanText }]}>Scan to Earn</Text>
+            </TouchableOpacity>
           </View>
-          <AnimatedProductImage uri={product.imageUrl} size={imgSize} />
-        </LinearGradient>
-        {/* Info zone */}
-        <View style={[styles.infoZone, darkMode ? styles.infoZoneDark : null]}>
-          <Text style={[styles.productName, darkMode ? styles.productNameDark : null]} numberOfLines={1}>{product.name}</Text>
-          <Text style={[styles.productSub, darkMode ? styles.productSubDark : null]} numberOfLines={2}>{product.sub}</Text>
-          <View style={styles.infoSpacer} />
-          <TouchableOpacity onPress={onScan} style={[styles.scanBtn, { backgroundColor: cc.scanBg }]} activeOpacity={0.8}>
-            <ScanIcon size={15} color={cc.scanText} />
-            <Text style={[styles.scanBtnText, { color: cc.scanText }]}>Scan to Earn</Text>
-          </TouchableOpacity>
-        </View>
+        </Animated.View>
       </Animated.View>
     </Pressable>
   );
@@ -362,12 +450,13 @@ export function ProductScreen({
   showBottomBanner?: boolean;
 }) {
   const { darkMode, tx } = usePreferenceContext();
-  const { products: apiProducts, categories: apiCategories, catalogLoading } = useAppData();
+  const { products: apiProducts, categories: apiCategories, catalogLoading, refreshAll } = useAppData();
   const { width } = useWindowDimensions();
 
   const [category, setCategory] = useState(normCat(initialCategory) || 'all');
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const PADDING = 14;
   const GAP = 12;
@@ -413,6 +502,12 @@ export function ProductScreen({
   const cc = category === 'all' ? DEFAULT_CAT_COLOR : catColor(category);
 
   const handleScan = useCallback(() => onNavigate('scan'), [onNavigate]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshAll();
+    setRefreshing(false);
+  }, [refreshAll]);
 
   // ── Render row ──────────────────────────────────────────────────────────────
   const renderRow = useCallback(({ item }: { item: ProductRow }) => (
@@ -594,6 +689,14 @@ export function ProductScreen({
       maxToRenderPerBatch={6}
       windowSize={7}
       removeClippedSubviews
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          colors={['#1A3C8F']}
+          tintColor="#1A3C8F"
+        />
+      }
     />
   );
 }
@@ -693,11 +796,27 @@ const styles = StyleSheet.create({
 
   row: { flexDirection: 'row', gap: 12 },
 
+  cardGlow: {
+    position: 'absolute',
+    bottom: -8,
+    alignSelf: 'center',
+    height: 20,
+    borderRadius: 20,
+    zIndex: 0,
+  },
+
   card: {
     backgroundColor: '#FFFFFF', borderRadius: 20, overflow: 'hidden',
     borderWidth: 1, borderColor: '#EEEEF3',
+    shadowColor: '#1A3C8F',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 6,
   },
   cardDark: { backgroundColor: '#111827', borderColor: '#243043' },
+
+  accentLine: { height: 3, width: '100%' },
 
   imgZone: {
     alignItems: 'center', justifyContent: 'center',
