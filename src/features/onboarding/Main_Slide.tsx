@@ -29,6 +29,7 @@ type FeatureBadgeConfig = {
   title: string;
   icon: 'shield' | 'award' | 'check' | 'target';
   accent: string;
+  compact?: boolean;
 };
 
 const LOGO = require('../../../assets/srv-login-logo.png');
@@ -64,7 +65,7 @@ const FEATURE_BADGES: FeatureBadgeConfig[] = [
   { title: 'BUILT WITH TRUST', icon: 'shield', accent: '#173E80' },
   { title: 'DRIVEN BY QUALITY', icon: 'award', accent: '#C85A2C' },
   { title: 'RELIABLE & DURABLE', icon: 'check', accent: '#188A2D' },
-  { title: 'PRECISION PERFORMANCE', icon: 'target', accent: '#C7332F' },
+  { title: 'PRECISION\nPERFORMANCE', icon: 'target', accent: '#C7332F', compact: true },
 ];
 
 function DividerTitle({ label, color = DARK_NAVY }: { label: string; color?: string }) {
@@ -148,6 +149,34 @@ function FeatureIcon({ icon, accent }: { icon: FeatureBadgeConfig['icon']; accen
   );
 }
 
+function TopAccentBars({
+  side,
+  top,
+}: {
+  side: 'left' | 'right';
+  top: number;
+}) {
+  const rightSide = side === 'right';
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.accentBarsWrap,
+        rightSide ? styles.accentBarsRight : styles.accentBarsLeft,
+        { top },
+      ]}
+    >
+      <View style={[styles.barPiece, styles.barNavyLg, rightSide ? styles.barNavyLgRight : null]} />
+      <View style={[styles.barPiece, styles.barGoldMd, rightSide ? styles.barGoldMdRight : null]} />
+      <View style={[styles.barPiece, styles.barNavySm, rightSide ? styles.barNavySmRight : null]} />
+      <View style={[styles.barPiece, styles.barGoldSm, rightSide ? styles.barGoldSmRight : null]} />
+      <View style={[styles.barPiece, styles.barGoldMini, rightSide ? styles.barGoldMiniRight : null]} />
+      <View style={[styles.barDot, rightSide ? styles.barDotRight : null]} />
+    </View>
+  );
+}
+
 function RoleCard({
   item,
   onPress,
@@ -178,9 +207,8 @@ function RoleCard({
 export default function MainSlide({ onRoleSelect }: MainSlideProps) {
   const insets = useSafeAreaInsets();
   const compact = isSmallDevice;
-  const cardWidth: DimensionValue = isTablet ? '48.9%' : '48.4%';
-  const cornerTop = insets.top + hs(6);
-  const cornerGlowTop = cornerTop + hs(10);
+  const cardWidth: DimensionValue = isTablet ? '49%' : '49.1%';
+  const cornerTop = insets.top + hs(8);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -188,13 +216,11 @@ export default function MainSlide({ onRoleSelect }: MainSlideProps) {
         style={[
           styles.content,
           compact ? styles.contentCompact : null,
-          { paddingTop: Math.max(insets.top, hs(8)) + hs(14) },
+          { paddingTop: Math.max(insets.top, hs(8)) + hs(18) },
         ]}
       >
-        <View style={[styles.cornerTopLeft, { top: cornerTop }]} />
-        <View style={[styles.cornerTopRight, { top: cornerTop }]} />
-        <View style={[styles.cornerGlowLeft, { top: cornerGlowTop }]} />
-        <View style={[styles.cornerGlowRight, { top: cornerGlowTop }]} />
+        <TopAccentBars side="left" top={cornerTop} />
+        <TopAccentBars side="right" top={cornerTop} />
 
         <View style={styles.heroArt}>
           <Image source={LOGO} resizeMode="contain" style={styles.heroLogo} />
@@ -226,7 +252,9 @@ export default function MainSlide({ onRoleSelect }: MainSlideProps) {
           {FEATURE_BADGES.map((badge) => (
             <View key={badge.title} style={styles.featureCard}>
               <FeatureIcon icon={badge.icon} accent={badge.accent} />
-              <Text style={styles.featureText}>{badge.title}</Text>
+              <Text style={[styles.featureText, badge.compact ? styles.featureTextCompact : null]}>
+                {badge.title}
+              </Text>
             </View>
           ))}
         </View>
@@ -243,61 +271,104 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: ws(18),
-    paddingBottom: hs(12),
+    paddingBottom: hs(6),
     backgroundColor: PAGE_BG,
   },
   contentCompact: {
     paddingHorizontal: ws(14),
   },
-  cornerTopLeft: {
+  accentBarsWrap: {
     position: 'absolute',
-    top: 0,
+    width: ws(100),
+    height: hs(64),
+  },
+  accentBarsLeft: {
     left: 0,
-    width: ws(118),
-    height: hs(96),
-    borderBottomRightRadius: ws(46),
-    backgroundColor: DARK_NAVY,
   },
-  cornerTopRight: {
-    position: 'absolute',
-    top: 0,
+  accentBarsRight: {
     right: 0,
-    width: ws(118),
-    height: hs(96),
-    borderBottomLeftRadius: ws(46),
-    backgroundColor: DARK_NAVY,
   },
-  cornerGlowLeft: {
+  barPiece: {
     position: 'absolute',
-    top: hs(12),
-    left: -ws(10),
-    width: ws(130),
-    height: hs(62),
-    borderBottomRightRadius: ws(46),
-    borderWidth: 3,
-    borderColor: '#E4AF52',
-    opacity: 0.92,
+    borderRadius: 999,
   },
-  cornerGlowRight: {
+  barNavyLg: {
+    top: hs(8),
+    left: ws(4),
+    width: ws(52),
+    height: 8,
+    backgroundColor: '#0C2348',
+  },
+  barNavyLgRight: {
+    left: undefined,
+    right: ws(4),
+  },
+  barGoldMd: {
+    top: hs(22),
+    left: ws(18),
+    width: ws(42),
+    height: 6,
+    backgroundColor: '#D8A04B',
+  },
+  barGoldMdRight: {
+    left: undefined,
+    right: ws(18),
+  },
+  barNavySm: {
+    top: hs(34),
+    left: ws(30),
+    width: ws(30),
+    height: 5,
+    backgroundColor: '#16386F',
+  },
+  barNavySmRight: {
+    left: undefined,
+    right: ws(30),
+  },
+  barGoldSm: {
+    top: hs(45),
+    left: ws(12),
+    width: ws(22),
+    height: 4,
+    backgroundColor: '#F0C979',
+  },
+  barGoldSmRight: {
+    left: undefined,
+    right: ws(12),
+  },
+  barGoldMini: {
+    top: hs(51),
+    left: ws(40),
+    width: ws(16),
+    height: 3,
+    backgroundColor: '#B96A31',
+  },
+  barGoldMiniRight: {
+    left: undefined,
+    right: ws(40),
+  },
+  barDot: {
     position: 'absolute',
-    top: hs(12),
-    right: -ws(10),
-    width: ws(130),
-    height: hs(62),
-    borderBottomLeftRadius: ws(46),
-    borderWidth: 3,
-    borderColor: '#E4AF52',
-    opacity: 0.92,
+    top: hs(18),
+    left: ws(66),
+    width: ws(8),
+    height: ws(8),
+    borderRadius: ws(4),
+    backgroundColor: '#E6BC69',
+  },
+  barDotRight: {
+    left: undefined,
+    right: ws(66),
   },
   heroArt: {
     alignItems: 'center',
-    paddingTop: hs(48),
-    paddingBottom: hs(6),
+    paddingTop: hs(30),
+    paddingBottom: hs(8),
   },
   heroLogo: {
-    width: ws(198),
-    height: hs(70),
-    marginBottom: hs(2),
+    width: ws(238),
+    height: hs(88),
+    marginBottom: hs(4),
   },
   dividerRow: {
     flexDirection: 'row',
@@ -333,7 +404,7 @@ const styles = StyleSheet.create({
     color: DARK_NAVY,
     fontSize: rf(24, 22, 27),
     fontWeight: '900',
-    marginTop: hs(14),
+    marginTop: hs(16),
   },
   welcomeTitleCompact: {
     fontSize: rf(22, 20, 24),
@@ -344,21 +415,21 @@ const styles = StyleSheet.create({
     fontSize: rf(14, 12, 16),
     fontWeight: '500',
     marginTop: hs(8),
-    marginBottom: hs(12),
+    marginBottom: hs(10),
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    rowGap: hs(10),
-    marginTop: hs(12),
+    rowGap: hs(16),
+    marginTop: hs(10),
   },
   roleCardPressable: {
     borderRadius: ws(16),
   },
   roleCard: {
     borderRadius: ws(16),
-    height: hs(158),
+    height: hs(146),
     overflow: 'hidden',
     position: 'relative',
     borderWidth: 1,
@@ -377,7 +448,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'nowrap',
     justifyContent: 'space-between',
-    marginTop: hs(12),
+    marginTop: hs(14),
     gap: ws(6),
   },
   featureCard: {
@@ -401,10 +472,14 @@ const styles = StyleSheet.create({
   },
   featureText: {
     color: '#1A2237',
-    fontSize: rf(8.8, 7.6, 9.5),
-    lineHeight: rf(11, 10, 12),
+    fontSize: rf(8.2, 7.2, 9),
+    lineHeight: rf(10.5, 9.5, 11.5),
     fontWeight: '800',
     textAlign: 'center',
+  },
+  featureTextCompact: {
+    fontSize: rf(7.4, 6.8, 8.2),
+    lineHeight: rf(9.6, 8.8, 10.4),
   },
   featureIconFrame: {
     width: ws(26),
