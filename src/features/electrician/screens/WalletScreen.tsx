@@ -340,7 +340,43 @@ export function WalletScreen({
     },
   ];
 
-  const actions = isDealer ? dealerActions : electricianActions;
+  const counterBoyActions = [
+    {
+      id: 'bank',
+      label: 'Bank Transfer',
+      detail: 'Fast withdrawal',
+      icon: TransferIcon,
+      tint: '#DDEAFE',
+      target: 'bank_details' as Screen,
+    },
+  ];
+
+  const userActions = [
+    {
+      id: 'buy',
+      label: 'Buy Schemes',
+      detail: 'Premium offers',
+      icon: GiftIcon,
+      tint: '#FBE4CC',
+      target: 'rewards' as Screen,
+    },
+    {
+      id: 'bank',
+      label: 'Bank Transfer',
+      detail: 'Fast withdrawal',
+      icon: TransferIcon,
+      tint: '#DDEAFE',
+      target: 'bank_details' as Screen,
+    },
+  ];
+
+  const actions = isDealer
+    ? dealerActions
+    : role === 'counterboy'
+    ? counterBoyActions
+    : role === 'user'
+    ? userActions
+    : electricianActions;
   const walletTitle = isDealer
     ? 'SRV Dealer Wallet'
     : role === 'user'
