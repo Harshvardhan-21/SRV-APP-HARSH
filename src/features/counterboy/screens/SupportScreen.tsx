@@ -44,7 +44,6 @@ export function SupportScreen({ onNavigate }: { onNavigate: (screen: Screen) => 
     settingsApi.getAppSettings()
       .then((settings) => {
         if (settings.supportPhone) setSupportPhone(settings.supportPhone);
-        if (settings.supportEmail) setSupportEmail(settings.supportEmail);
       })
       .catch(() => {});
   }, []);
