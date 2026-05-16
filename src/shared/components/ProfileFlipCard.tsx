@@ -167,13 +167,15 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
     .slice(0, 2);
 
   const isDealer = role === 'dealer';
+  const isUser = role === 'user';
   const isCounterboy = role === 'counterboy';
   const counterboyLightCard = isCounterboy && !darkMode;
+  const usesOwnAccountDetails = isDealer || isUser || isCounterboy;
   const code = isDealer
     ? profile?.dealer_code
-    : role === 'user'
+    : isUser
     ? profile?.user_code
-    : role === 'counterboy'
+    : isCounterboy
     ? profile?.counterboy_code
     : profile?.electrician_code;
   const qrValue = code || profile?.phone || 'SRV';
@@ -240,21 +242,21 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
   };
 
   const fallbackText = tx('Not available');
-  const dealerName =
-    isDealer ? profile?.name || fallbackText : profile?.dealer_name || fallbackText;
+  const detailName = usesOwnAccountDetails
+    ? profile?.name || fallbackText
+    : profile?.dealer_name || fallbackText;
   const formatTranslatedLocation = (parts: (string | undefined)[]) =>
     parts
       .filter(Boolean)
       .map((part) => tx(part as string))
       .join(', ');
 
-  const dealerLocation =
-    isDealer
-      ? formatTranslatedLocation([profile?.town, profile?.state]) || fallbackText
-      : formatTranslatedLocation([profile?.dealer_town, profile?.state]) || fallbackText;
-  const dealerPhoneValue = isDealer ? profile?.phone : profile?.dealer_phone;
-  const dealerPhone = dealerPhoneValue ? '+91 ' + dealerPhoneValue : fallbackText;
-  const dealerAddress = profile?.address
+  const detailLocation = usesOwnAccountDetails
+    ? formatTranslatedLocation([profile?.town, profile?.state]) || fallbackText
+    : formatTranslatedLocation([profile?.dealer_town, profile?.state]) || fallbackText;
+  const detailPhoneValue = usesOwnAccountDetails ? profile?.phone : profile?.dealer_phone;
+  const detailPhone = detailPhoneValue ? '+91 ' + detailPhoneValue : fallbackText;
+  const detailAddress = profile?.address
     ? profile.address
         .replace(/\bPunjab\b/g, tx('Punjab'))
         .replace(/\bMansa\b/g, tx('Mansa'))
@@ -262,19 +264,19 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
     : fallbackText;
   const frontLocation =
     isDealer
-      ? dealerLocation
+      ? detailLocation
       : formatTranslatedLocation([profile?.town, profile?.state]) || fallbackText;
   const codeLabel = isDealer
     ? tx('Dealer Code')
-    : role === 'user'
+    : isUser
     ? tx('Customer ID')
-    : role === 'counterboy'
+    : isCounterboy
     ? tx('Counter Boy ID')
     : tx('Electrician Code');
-  const backThirdLabel = isDealer || role === 'user' ? tx('Address') : tx('Phone Number');
-  const backThirdValue = isDealer ? dealerAddress : role === 'user' ? dealerAddress : dealerPhone;
+  const backThirdLabel = usesOwnAccountDetails ? tx('Address') : tx('Phone Number');
+  const backThirdValue = usesOwnAccountDetails ? detailAddress : detailPhone;
   const exportName =
-    (profile?.name || dealerName || fallbackText)
+    (profile?.name || detailName || fallbackText)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '') || 'srv-profile-card';
@@ -284,16 +286,18 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
     const profilePhone = escapeHtml(profile?.phone ? '+91 ' + profile.phone : fallbackText);
     const location = escapeHtml(frontLocation);
     const safeCode = escapeHtml(code || fallbackText);
-    const safeDealerName = escapeHtml(dealerName);
-    const safeDealerLocation = escapeHtml(dealerLocation);
-    const safeDealerPhone = escapeHtml(dealerPhone);
-    const safeDealerAddress = escapeHtml(dealerAddress);
-    const heading = escapeHtml(tx(role === 'dealer' ? 'Business Details' : 'Connected Dealer'));
+    const safeDetailName = escapeHtml(detailName);
+    const safeDetailLocation = escapeHtml(detailLocation);
+    const safeDetailPhone = escapeHtml(detailPhone);
+    const safeDetailAddress = escapeHtml(detailAddress);
+    const heading = escapeHtml(tx(isDealer ? 'Business Details' : usesOwnAccountDetails ? 'Account Details' : 'Connected Dealer'));
     const partnerRole = escapeHtml(
       tx(
-        role === 'dealer'
+        isDealer
           ? 'Dealer Partner'
-          : role === 'counterboy'
+          : isUser
+            ? 'Customer Account'
+          : isCounterboy
             ? 'Counter Boy Account'
             : 'Electrician Partner',
       ),
@@ -363,10 +367,10 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
             <div class="back-layout">
               <div class="back-left">
                 <div class="eyebrow">${heading}</div>
-                <div class="stack">
-                  <div class="pill"><div class="pill-label">${safeNameLabel}</div><div class="pill-value">${safeDealerName}</div></div>
-                  <div class="pill"><div class="pill-label">${safeLocationLabel}</div><div class="pill-value">${safeDealerLocation}</div></div>
-                  <div class="pill"><div class="pill-label">${safeBackThirdLabel}</div><div class="pill-value">${role === 'dealer' ? safeDealerAddress : safeDealerPhone}</div></div>
+                  <div class="stack">
+                  <div class="pill"><div class="pill-label">${safeNameLabel}</div><div class="pill-value">${safeDetailName}</div></div>
+                  <div class="pill"><div class="pill-label">${safeLocationLabel}</div><div class="pill-value">${safeDetailLocation}</div></div>
+                  <div class="pill"><div class="pill-label">${safeBackThirdLabel}</div><div class="pill-value">${usesOwnAccountDetails ? safeDetailAddress : safeDetailPhone}</div></div>
                 </div>
               </div>
               <div class="qr-panel">
@@ -611,18 +615,18 @@ export default function ProfileFlipCard({ profile, role = 'electrician', photoUr
                       darkMode && isCounterboy ? styles.backHeadingCounterboyDark : null,
                     ]}
                   >
-                    {tx(role === 'dealer' ? 'Business Details' : role === 'user' ? 'Account Details' : 'Connected Dealer')}
+                    {tx(isDealer ? 'Business Details' : usesOwnAccountDetails ? 'Account Details' : 'Connected Dealer')}
                   </Text>
                   <View style={styles.metaStack}>
-                    <DetailPill label="Name" value={dealerName} compact isUser={role === 'user'} isCounterboy={isCounterboy} />
-                    <DetailPill label="Location" value={dealerLocation} compact lines={2} isUser={role === 'user'} isCounterboy={isCounterboy} />
+                    <DetailPill label="Name" value={detailName} compact isUser={isUser} isCounterboy={isCounterboy} />
+                    <DetailPill label="Location" value={detailLocation} compact lines={2} isUser={isUser} isCounterboy={isCounterboy} />
                     <DetailPill
                       label={backThirdLabel}
                       value={backThirdValue}
                       compact
-                      isUser={role === 'user'}
+                      isUser={isUser}
                       isCounterboy={isCounterboy}
-                      lines={role === 'dealer' ? 2 : undefined}
+                      lines={usesOwnAccountDetails ? 2 : undefined}
                     />
                   </View>
                 </View>

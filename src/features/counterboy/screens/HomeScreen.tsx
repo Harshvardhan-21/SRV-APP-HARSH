@@ -301,8 +301,8 @@ export function HomeScreen({
       title: tx('Product Catalog'),
       sub: tx('Download PDF for latest updated prices'),
       icon: DownloadIcon,
-      iconColors: [cb.blushSoft, cb.soft] as const,
-      iconTint: cb.primaryDeep,
+      iconColors: ['#DBEAFE', '#BFDBFE'] as const,
+      iconTint: '#1D4ED8',
       onPress: () => openCatalog(catalogPdfUrl),
     },
     {
@@ -317,8 +317,8 @@ export function HomeScreen({
       title: tx('Wallet'),
       sub: tx('Points & rewards'),
       icon: WalletIcon,
-      iconColors: [cb.peachSoft, cb.blushSoft] as const,
-      iconTint: cb.primaryDeep,
+      iconColors: ['#FCE7F3', '#FBCFE8'] as const,
+      iconTint: '#DB2777',
       onPress: () => onNavigate('wallet'),
     },
   ];
@@ -382,16 +382,11 @@ export function HomeScreen({
             profile={{
               name: authUser?.name ?? '',
               phone: authUser?.phone ?? '',
-              dealer_code: authUser?.dealerCode ?? '',
               counterboy_code: authUser?.counterboyCode ?? '',
               town: authUser?.city ?? '',
               district: authUser?.district ?? '',
               state: authUser?.state ?? '',
               address: authUser?.address ?? '',
-              electrician_code: authUser?.electricianCode ?? '',
-              dealer_name: authUser?.dealerName ?? '',
-              dealer_town: authUser?.dealerTown ?? '',
-              dealer_phone: authUser?.dealerPhone ?? '',
             }}
             role="counterboy"
             photoUri={profilePhotoUri}

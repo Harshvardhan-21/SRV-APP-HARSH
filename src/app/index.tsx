@@ -35,6 +35,7 @@ import { PlayScreen as UserPlayScreen } from '@/features/user/screens/PlayScreen
 import { WalletScreen as UserWalletScreen } from '@/features/user/screens/WalletScreen';
 import { AuthLandingScreen } from '@/features/profile/screens/AuthLandingScreen';
 import { AccessFeatureGateScreen } from '@/features/profile/screens/AccessFeatureGateScreen';
+import { ApprovalPendingScreen } from '@/features/profile/screens/ApprovalPendingScreen';
 import type { SubPage } from '@/features/profile/components/ProfileShared';
 import {
   WalletBankDetailsScreen,
@@ -47,6 +48,7 @@ import type { Screen, UserRole } from '@/shared/types/navigation';
 import type { RewardHistoryItem } from '@/shared/types/rewards';
 import { GetStartedScreen } from '@/features/onboarding/GetStartedScreen';
 import { useAuth } from '@/shared/context/AuthContext';
+import { useAppData } from '@/shared/context/AppDataContext';
 import { storage } from '@/shared/api';
 
 type OnboardingStartOptions = {
@@ -54,12 +56,22 @@ type OnboardingStartOptions = {
   passwordValue?: string;
 };
 
+function roleNeedsAdminApproval(role: UserRole | null | undefined): role is 'dealer' | 'counterboy' {
+  return role === 'dealer' || role === 'counterboy';
+}
+
+function isApprovedAccountStatus(status?: string | null) {
+  const normalized = String(status ?? '').trim().toLowerCase();
+  return normalized === 'active' || normalized === 'approved';
+}
+
 export default function Index() {
   return <AppContent />;
 }
 
 function AppContent() {
   const { isAuthenticated, isLoading: authLoading, user, role: authRole, login, logout } = useAuth();
+  const { appSettings } = useAppData();
   const [currentScreen, setCurrentScreen] = useState<Screen>('home');
   const [screenResetKey, setScreenResetKey] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -103,6 +115,9 @@ function AppContent() {
   const isDealer = currentRole === 'dealer';
   const isUser = currentRole === 'user';
   const isCounterBoy = currentRole === 'counterboy';
+  const pendingApprovalRole = roleNeedsAdminApproval(authRole) && isAuthenticated && !isApprovedAccountStatus(user?.status)
+    ? authRole
+    : null;
 
   // Once auth loading is done, set initial state
   useEffect(() => {
@@ -308,6 +323,21 @@ function AppContent() {
     [handleAuthenticatedRoleStart]
   );
 
+  const handleUseAnotherApprovalNumber = useCallback(() => {
+    void (async () => {
+      const pendingRole = pendingApprovalRole;
+      await logout();
+      if (!pendingRole) {
+        setShowOnboarding(true);
+        return;
+      }
+      setCurrentRole(pendingRole);
+      setCurrentScreen('profile');
+      setGuestAuthRole(pendingRole);
+      setShowOnboarding(false);
+    })();
+  }, [logout, pendingApprovalRole]);
+
   const handleElectricianRewardCommit = useCallback(
     (items: Omit<RewardHistoryItem, 'id' | 'time'>[]) => {
       if (!items.length) {
@@ -339,6 +369,17 @@ function AppContent() {
   );
 
   const activeScreen = useMemo(() => {
+    if (pendingApprovalRole) {
+      return (
+        <ApprovalPendingScreen
+          role={pendingApprovalRole}
+          supportPhone={appSettings?.supportPhone}
+          whatsappNumber={appSettings?.whatsappNumber}
+          onUseAnotherNumber={handleUseAnotherApprovalNumber}
+        />
+      );
+    }
+
     if (guestAuthRole) {
       return (
         <AuthLandingScreen
@@ -860,6 +901,10 @@ function AppContent() {
     handleAddToCart,
     handleUpdateCartQty,
     handleRemoveFromCart,
+    appSettings?.supportPhone,
+    appSettings?.whatsappNumber,
+    pendingApprovalRole,
+    handleUseAnotherApprovalNumber,
   ]);
 
   if (showOnboarding) {
@@ -888,15 +933,17 @@ function AppContent() {
             {activeScreen}
           </View>
         </SafeAreaView>
-        {isDealer ? (
-          <DealerBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
-        ) : isUser ? (
-          <UserBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
-        ) : isCounterBoy ? (
-          <CounterBoyBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
-        ) : (
-          <ElectricianBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
-        )}
+        {!pendingApprovalRole ? (
+          isDealer ? (
+            <DealerBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+          ) : isUser ? (
+            <UserBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+          ) : isCounterBoy ? (
+            <CounterBoyBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+          ) : (
+            <ElectricianBottomNav currentScreen={currentScreen} onNavigate={handleNavigate} />
+          )
+        ) : null}
       </View>
     </PreferenceContext.Provider>
   );
