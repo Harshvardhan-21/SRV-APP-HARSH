@@ -375,7 +375,7 @@ export const redemptionsApi = {
 
 export const ordersApi = {
   getAll: () =>
-    api.get<UserOrder[]>('/profile/orders', undefined, true),
+    api.get<UserOrder[]>('/mobile/profile/orders', undefined, true),
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
