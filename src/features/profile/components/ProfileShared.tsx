@@ -66,7 +66,8 @@ export type SubPage =
   | 'Scan History'
   | 'Contact Support'
   | 'Privacy Policy'
-  | 'Rate Us';
+  | 'Rate Us'
+  | 'KYC Verification';
 
 export type IconName =
   | 'edit'

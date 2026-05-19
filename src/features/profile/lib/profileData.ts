@@ -38,6 +38,13 @@ export type DealerMembership = {
 
 export const electricianMenuItems: ProfileMenuItem[] = [
   {
+    label: 'KYC Verification',
+    icon: 'check',
+    color: '#10B981',
+    bg: '#D1FAE5',
+    screen: 'KYC Verification',
+  },
+  {
     label: 'My Redemption',
     icon: 'redeem',
     color: C.primary,
@@ -72,6 +79,13 @@ export const electricianMenuItems: ProfileMenuItem[] = [
 ];
 
 export const dealerMenuItems: ProfileMenuItem[] = [
+  {
+    label: 'KYC Verification',
+    icon: 'check',
+    color: '#10B981',
+    bg: '#D1FAE5',
+    screen: 'KYC Verification',
+  },
   {
     label: 'My Redemption',
     icon: 'redeem',
@@ -185,6 +199,13 @@ export const counterboyMenuItems: ProfileMenuItem[] = electricianMenuItems.filte
 
 /** Customer app — same routes as counter boy; warm accent colors */
 export const userMenuItems: ProfileMenuItem[] = [
+  {
+    label: 'KYC Verification',
+    icon: 'check',
+    color: '#10B981',
+    bg: '#D1FAE5',
+    screen: 'KYC Verification',
+  },
   {
     label: 'My Redemption',
     icon: 'redeem',

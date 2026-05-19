@@ -46,6 +46,7 @@ import { ReferFriendPage } from './ReferFriendScreen';
 import { ScanHistoryPage } from './ScanHistoryScreen';
 import { TransferPointsPage } from './TransferPointsScreen';
 import { createShadow } from '@/shared/theme/shadows';
+import { KYCVerificationScreen } from './KYCVerificationScreen';
 import { TierIcon } from '@/features/dealer/screens/MemberTierScreen';
 import { counterboyTheme as cbPalette } from '@/features/counterboy/theme';
 import { CUSTOMER_THEME as cuTheme } from '@/features/user/theme';
@@ -659,6 +660,7 @@ export function ProfileScreen({
     'Contact Support': <ContactSupportPage onBack={() => setSubPage(null)} />,
     'Privacy Policy': <PrivacyPolicyPage onBack={() => setSubPage(null)} />,
     'Rate Us': <RateUsPage onBack={() => setSubPage(null)} />,
+    'KYC Verification': <KYCVerificationScreen onBack={() => setSubPage(null)} currentRole={currentRole} />,
   };
 
   if (subPage) {
@@ -928,18 +930,22 @@ export function ProfileScreen({
               </TouchableOpacity>
             </View>
             {currentRole === 'dealer' && !hasCompletedKyc ? (
-              <View style={styles.kycBanner}>
+              <TouchableOpacity 
+                style={styles.kycBanner}
+                onPress={() => setSubPage('KYC Verification')}
+                activeOpacity={0.7}
+              >
                 <View style={styles.kycIcon}>
                   <AppIcon name="warning" size={18} color="#B45309" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.kycTitle}>Complete KYC to unlock all features</Text>
-                  <Text style={styles.kycSub}>Add PAN & GST details to get verified</Text>
+                  <Text style={styles.kycSub}>Tap to upload documents</Text>
                 </View>
                 <View style={styles.kycBadge}>
                   <Text style={styles.kycBadgeTxt}>Pending</Text>
                 </View>
-              </View>
+              </TouchableOpacity>
             ) : null}
             {visibleDetailRows
               .slice(0, showFullProfile ? visibleDetailRows.length : 4)

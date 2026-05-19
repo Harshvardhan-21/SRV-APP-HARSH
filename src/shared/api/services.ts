@@ -50,6 +50,11 @@ function sanitizeUserProfileUpdatePayload(data: Partial<UserProfile>) {
     darkMode: data.darkMode,
     pushEnabled: data.pushEnabled,
     profileImage: data.profileImage,
+    // KYC document fields
+    aadharFrontImage: data.aadharFrontImage,
+    aadharBackImage: data.aadharBackImage,
+    panDocument: data.panDocument,
+    gstDocument: data.gstDocument,
   };
 }
 
@@ -453,6 +458,31 @@ export const profileApi = {
 
   updatePreferences: (data: { language?: string; darkMode?: boolean; pushEnabled?: boolean }) =>
     api.patch<UserProfile>('/mobile/auth/profile', data, true),
+
+  uploadDocument: async (file: { uri: string; type: string; name: string }, documentType: 'aadhar-front' | 'aadhar-back' | 'pan' | 'gst') => {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: file.uri,
+      type: file.type,
+      name: file.name,
+    } as any);
+
+    const accessToken = await storage.getAccessToken();
+    const response = await fetch(`${apiBaseUrl}/upload/aadhar-image`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error('Upload failed');
+    }
+
+    const result = await response.json();
+    return result.url as string;
+  },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -531,12 +561,18 @@ export type UserProfile = {
   // Common
   status?: string;
   kycStatus?: string;
+  kycRejectionReason?: string;
   bankLinked?: boolean;
   upiId?: string;
   bankAccount?: string;
   ifsc?: string;
   bankName?: string;
   accountHolderName?: string;
+  // KYC documents
+  aadharFrontImage?: string | null;
+  aadharBackImage?: string | null;
+  panDocument?: string | null;
+  gstDocument?: string | null;
   // Legacy compat
   fullName?: string;
   pointsBalance?: number;
