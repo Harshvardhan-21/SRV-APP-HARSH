@@ -708,6 +708,8 @@ export type AppSettings = {
   rolePageControls?: Record<string, Record<string, boolean>> | null;
   appPageContent?: AppPageContentMap | null;
   pageSectionOrder?: Record<string, Record<string, string[]>> | null;
+  privacyPolicyContent?: string | null;
+  privacyPolicyUpdated?: string | null;
 };
 
 export type ScanResult = {

@@ -48,7 +48,7 @@ const CAT_IMAGES: Record<string, string> = {
   concealedbox: 'https://srvelectricals.com/cdn/shop/files/CRD_PL_3.png?v=1757426566&width=320',
   modular: 'https://srvelectricals.com/cdn/shop/files/3x3_679e5d30-ecf2-446e-9452-354bbf4c4a26.png?v=1757426377&width=320',
   mcb: 'https://srvelectricals.com/cdn/shop/files/MCB_Box_4_Way_GI.png?v=1757426418&width=320',
-  busbar: 'https://srvelectricals.com/cdn/shop/files/Bus_Bar_100A_Super.png?v=1757426672&width=320',
+  busbar: 'https://cdn.shopify.com/s/files/1/0651/4583/1466/files/Bus_Bar_100A_Super.png',
   exhaust: 'https://srvelectricals.com/cdn/shop/files/AP-Turtle-Fan.webp?v=1747938680&width=320',
   led: 'https://srvelectricals.com/cdn/shop/files/FloodLightSleek.png?v=1757426471&width=320',
   changeover: 'https://srvelectricals.com/cdn/shop/files/ACO_100A_FP.png?v=1757426480&width=320',
@@ -289,7 +289,7 @@ function HomeCategoryCard({
   onPress,
   buttonLabel,
 }: {
-  cat: { id: string; label: string; imageUrl?: string | null };
+  cat: { id: string; label: string; imageUrl?: string | null; _fallbackImg?: string };
   index: number;
   cardW: number;
   darkMode: boolean;
@@ -301,7 +301,10 @@ function HomeCategoryCard({
   const tiltY = useRef(new Animated.Value(0)).current;
   const entryY = useRef(new Animated.Value(50)).current;
   const entryOp = useRef(new Animated.Value(0)).current;
-  const imgUri = getCatImage(cat.id, cat.imageUrl);
+  // Use _fallbackImg if provided (for hardcoded categories with no DB image), else getCatImage
+  const imgUri = cat._fallbackImg && !cat.imageUrl
+    ? cat._fallbackImg
+    : getCatImage(cat.id, cat.imageUrl);
 
   useEffect(() => {
     Animated.parallel([
@@ -523,22 +526,29 @@ export function HomeScreen({
   }, [ctxCategories, ctxProducts]);
   const displayedCategories = useMemo(() => {
     const hardcodedCategories = [
-      { id: 'Fan Box', label: 'Fan Box', searchTerms: ['fan', 'fanbox', 'fan-box'] },
-      { id: 'Concealed Box', label: 'Concealed Box', searchTerms: ['concealed', 'concealedbox', 'concealed-box'] },
-      { id: 'BUS BAR SUPER', label: 'Bus Bar Super', searchTerms: ['bus', 'bar', 'busbar', 'super'] },
-      { id: 'ECO SPN DD MCB BOX', label: 'MCB Box', searchTerms: ['mcb', 'eco', 'spn', 'dd'] },
+      { id: 'Fan Box',          label: 'Fan Box',       fallbackImg: CAT_IMAGES.fanbox,      searchTerms: ['fan', 'fanbox', 'fan-box'] },
+      { id: 'Concealed Box',    label: 'Concealed Box', fallbackImg: CAT_IMAGES.concealedbox, searchTerms: ['concealed', 'concealedbox', 'concealed-box'] },
+      { id: 'BUS BAR SUPER',    label: 'Bus Bar Super', fallbackImg: CAT_IMAGES.busbar,       searchTerms: ['bus bar super', 'busbarsuper'] },
+      { id: 'ECO SPN DD MCB BOX', label: 'MCB Box',    fallbackImg: CAT_IMAGES.mcb,          searchTerms: ['mcb', 'eco', 'spn', 'dd'] },
     ];
-    
-    // Try to match with actual categories from database
+
     return hardcodedCategories.map(hardcoded => {
       const found = categories.find((category) => {
         const cId = category.id.toLowerCase();
         const cLabel = (category.label || '').toLowerCase();
-        return hardcoded.searchTerms.some(term => 
+        return hardcoded.searchTerms.some(term =>
           cId.includes(term.toLowerCase()) || cLabel.includes(term.toLowerCase())
         );
       });
-      return found ? { ...found, label: hardcoded.label } : { id: hardcoded.id, label: hardcoded.label, count: 0 };
+      // If DB has an image use it, otherwise always use the hardcoded fallback
+      const imageUrl = found?.imageUrl ?? null;
+      return {
+        id: found?.id ?? hardcoded.id,
+        label: hardcoded.label,
+        imageUrl: imageUrl,
+        // Pass fallback so HomeCategoryCard can use it when imageUrl is null
+        _fallbackImg: imageUrl ? undefined : hardcoded.fallbackImg,
+      };
     });
   }, [categories]);
   const dealerTestimonials = useMemo<TestimonialItem[]>(() => {
