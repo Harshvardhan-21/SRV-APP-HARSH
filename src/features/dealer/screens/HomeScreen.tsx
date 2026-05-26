@@ -606,7 +606,7 @@ export function HomeScreen({
     return () => pulse.stop();
   }, [statPulse]);
 
-  const quickActions = [
+  const quickActions = useMemo(() => [
     {
       testID: 'dealer-home-action-electricians',
       accessibilityLabel: 'Dealer home quick action associate electrician',
@@ -656,11 +656,14 @@ export function HomeScreen({
         ),
       hidden: !showWhatsapp,
     },
-  ].filter((item) => !item.hidden);
+  ].filter((item) => !item.hidden), [
+    tx, language, connectedCount, showElectricians, showCatalog, showCallElectrician, showWhatsapp,
+    onNavigate, openCatalog, catalogPdfUrl, supportWhatsapp,
+  ]);
 
   const homeSections = useAppPageSections('dealer', 'home');
 
-  const renderBodySections = (): React.ReactNode[] => {
+  const bodySections = useMemo((): React.ReactNode[] => {
     if (!homeSections.length) return [];
 
     const sectionMap: Record<HomePageSectionKey, React.ReactNode | null> = {
@@ -763,12 +766,19 @@ export function HomeScreen({
       .filter((key) => key !== 'hero_banner')
       .map((key) => sectionMap[key])
       .filter(Boolean) as React.ReactNode[];
-  };
+  }, [
+    homeSections, authUser, activeBannerSlides, heroImageHeight, darkMode,
+    quickActions, cardW, categories, pageContent, showProduct,
+    displayedCategories, catCardW, showTestimonials, dealerTestimonials,
+    onNavigate, onOpenProductCategory, tx, language,
+  ]);
 
   return (
     <ScrollView
       style={[styles.screen, darkMode ? styles.screenDark : null]}
       showsVerticalScrollIndicator={false}
+      bounces={false}
+      overScrollMode="never"
     >
       <LinearGradient
         colors={darkMode ? ['#0B1220', '#101A2F', '#18263E'] : ['#EAF3FF', '#DCE8FF', '#C7DAFF']}
@@ -923,7 +933,7 @@ export function HomeScreen({
       </LinearGradient>
 
       <View style={styles.body}>
-        {renderBodySections()}
+        {bodySections}
         <View style={{ height: Math.max(30, insets.bottom + 18) }} />
       </View>
     </ScrollView>

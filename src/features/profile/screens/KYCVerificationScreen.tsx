@@ -53,15 +53,14 @@ export function KYCVerificationScreen({ onBack, currentRole }: KYCVerificationSc
     try {
       setIsSaving(true);
       
-      const updateData: any = {};
-      if (draftAadhar) updateData.aadharFrontImage = draftAadhar;
+      const updateData: any = { kycStatus: 'pending' };
+      const finalAadhar = draftAadhar || authUser?.aadharFrontImage;
+      if (finalAadhar) updateData.aadharFrontImage = finalAadhar;
       if (draftPan) updateData.panDocument = draftPan;
       if (draftGst) updateData.gstDocument = draftGst;
 
-      if (Object.keys(updateData).length > 0) {
-        await authApi.updateProfile(updateData);
-        await refreshProfile();
-      }
+      await authApi.updateProfile(updateData);
+      await refreshProfile();
 
       Alert.alert(
         tx('Success'),

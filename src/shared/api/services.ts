@@ -54,32 +54,18 @@ function sanitizeCounterBoySignupPayload(data: {
 }
 
 function sanitizeUserProfileUpdatePayload(data: Partial<UserProfile>) {
-  return {
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-    city: data.city,
-    town: data.town,
-    district: data.district,
-    state: data.state,
-    address: data.address,
-    pincode: data.pincode,
-    gstNumber: data.gstNumber,
-    accountHolderName: data.accountHolderName,
-    bankAccount: data.bankAccount,
-    ifsc: data.ifsc,
-    bankName: data.bankName,
-    upiId: data.upiId,
-    bankLinked: data.bankLinked,
-    language: data.language,
-    darkMode: data.darkMode,
-    pushEnabled: data.pushEnabled,
-    profileImage: data.profileImage,
-    // KYC document fields
-    aadharFrontImage: data.aadharFrontImage,
-    panDocument: data.panDocument,
-    gstDocument: data.gstDocument,
-  };
+  const allowed = [
+    'name', 'email', 'phone', 'city', 'town', 'district', 'state',
+    'address', 'pincode', 'gstNumber', 'accountHolderName', 'bankAccount',
+    'ifsc', 'bankName', 'upiId', 'bankLinked', 'language', 'darkMode',
+    'pushEnabled', 'profileImage',
+    'kycStatus', 'aadharFrontImage', 'panDocument', 'gstDocument',
+  ] as const;
+  const out: Record<string, unknown> = {};
+  for (const key of allowed) {
+    if (key in data) out[key] = data[key];
+  }
+  return out;
 }
 
 function buildElectricianCodeFallback(data: {
@@ -641,7 +627,7 @@ export const profileApi = {
     };
     const field = fieldMap[documentType];
     if (field) {
-      await api.patch('/mobile/auth/profile', { [field]: url }, true);
+      await authApi.updateProfile({ [field]: url });
     }
 
     return url;

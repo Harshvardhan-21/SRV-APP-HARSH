@@ -471,8 +471,6 @@ export function HomeScreen({
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [apiBannerSlides, setApiBannerSlides] = useState<CarouselSlide[]>([]);
-  const [, setBannerLoading] = useState(true);
-  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
   const statsPulse = useRef(new Animated.Value(1)).current;
   const cardW = (width - 28 - 12) / 2;
   const heroImageHeight = Math.round((width - 28) * 0.56);
@@ -535,39 +533,33 @@ export function HomeScreen({
       });
   }, [ctxCategories, ctxProducts]);
 
-  // Map testimonials from context
-  useEffect(() => {
+  const testimonials = useMemo<TestimonialItem[]>(() => {
     if (ctxTestimonials.length > 0) {
-      setTestimonials(
-        ctxTestimonials.map((t, index) => {
-          const themed = getTestimonialTheme(index);
-          const fallback = TESTIMONIAL_FALLBACK_COPY[index % TESTIMONIAL_FALLBACK_COPY.length];
-          return {
-            initials: t.initials ?? t.personName.slice(0, 2).toUpperCase() ?? fallback.initials,
-            name: t.personName || fallback.name,
-            location: t.location || fallback.location,
-            tier: t.tier || fallback.tier,
-            yearsWithUs:
-              t.yearsConnected != null
-                ? `Connected for ${t.yearsConnected} year${t.yearsConnected !== 1 ? 's' : ''}`
-                : fallback.yearsWithUs,
-            quote: t.quote?.trim() || fallback.quote,
-            highlight: t.highlight?.trim() || fallback.highlight,
-            colors: themed.colors,
-            ring: themed.ring,
-            glow: themed.glow,
-          };
-        })
-      );
-      return;
+      return ctxTestimonials.map((t, index) => {
+        const themed = getTestimonialTheme(index);
+        const fallback = TESTIMONIAL_FALLBACK_COPY[index % TESTIMONIAL_FALLBACK_COPY.length];
+        return {
+          initials: t.initials ?? t.personName.slice(0, 2).toUpperCase() ?? fallback.initials,
+          name: t.personName || fallback.name,
+          location: t.location || fallback.location,
+          tier: t.tier || fallback.tier,
+          yearsWithUs:
+            t.yearsConnected != null
+              ? `Connected for ${t.yearsConnected} year${t.yearsConnected !== 1 ? 's' : ''}`
+              : fallback.yearsWithUs,
+          quote: t.quote?.trim() || fallback.quote,
+          highlight: t.highlight?.trim() || fallback.highlight,
+          colors: themed.colors,
+          ring: themed.ring,
+          glow: themed.glow,
+        };
+      });
     }
 
-    setTestimonials(
-      TESTIMONIAL_FALLBACK_COPY.map((item, index) => {
-        const themed = getTestimonialTheme(index);
-        return { ...item, colors: themed.colors, ring: themed.ring, glow: themed.glow };
-      })
-    );
+    return TESTIMONIAL_FALLBACK_COPY.map((item, index) => {
+      const themed = getTestimonialTheme(index);
+      return { ...item, colors: themed.colors, ring: themed.ring, glow: themed.glow };
+    });
   }, [ctxTestimonials]);
 
   // Map banners from context — set immediately, prefetch in background
@@ -575,7 +567,6 @@ export function HomeScreen({
     const mapped = mapBannerSlides(ctxBanners as any[]);
     // Set slides immediately so banner shows right away
     setApiBannerSlides(mapped as any);
-    if (mapped.length > 0) setBannerLoading(false);
     // Prefetch in background for smoother experience
     const uris = mapped
       .map((b) => (typeof b.image === 'object' && 'uri' in b.image ? b.image.uri : null))
@@ -602,8 +593,6 @@ export function HomeScreen({
         }
       } catch {
         // Keep existing UI if DB banners still fail here.
-      } finally {
-        if (!cancelled) setBannerLoading(false);
       }
     };
 
@@ -656,7 +645,7 @@ export function HomeScreen({
     return () => pulse.stop();
   }, [statsPulse]);
 
-  const quickActions = [
+  const quickActions = useMemo(() => [
     {
       testID: 'user-home-action-categories',
       accessibilityLabel: 'User home quick action categories',
@@ -701,12 +690,15 @@ export function HomeScreen({
       onPress: () =>
           Linking.openURL(`https://wa.me/${appSettings?.whatsappNumber ?? '918837684004'}?text=Hello%20SRV%20Electricals%2C%20I%20need%20support`),
       hidden: !showWhatsapp,
-      },
-  ].filter((item) => !item.hidden);
+    },
+  ].filter((item) => !item.hidden), [
+    tx, pageContent, showCategories, showCatalog, showRewards, showWhatsapp,
+    onNavigate, openCatalog, catalogPdfUrl, appSettings?.whatsappNumber,
+  ]);
 
   const homeSections = useAppPageSections('user', 'home');
 
-  const renderBodySections = (): React.ReactNode[] => {
+  const bodySections = useMemo((): React.ReactNode[] => {
     if (!homeSections.length) return [];
 
     const sectionMap: Record<HomePageSectionKey, React.ReactNode | null> = {
@@ -793,12 +785,19 @@ export function HomeScreen({
       .filter((key) => key !== 'hero_banner')
       .map((key) => sectionMap[key])
       .filter(Boolean) as React.ReactNode[];
-  };
+  }, [
+    homeSections, authUser, activeBannerSlides, heroImageHeight, darkMode,
+    quickActions, cardW, categories, pageContent, showProduct,
+    displayedCategories, catCardW, showTestimonials, testimonials,
+    onNavigate, onOpenProductCategory, tx,
+  ]);
 
   return (
     <ScrollView
       style={[styles.container, darkMode ? styles.containerDark : null]}
       showsVerticalScrollIndicator={false}
+      bounces={false}
+      overScrollMode="never"
     >
       <LinearGradient
         colors={darkMode ? CUSTOMER_THEME.heroDark : CUSTOMER_THEME.heroLight}
@@ -970,7 +969,7 @@ export function HomeScreen({
       </LinearGradient>
 
       <View style={[styles.body, darkMode ? styles.bodyDark : null]}>
-        {renderBodySections()}
+        {bodySections}
         <View style={{ height: Math.max(30, insets.bottom + 18) }} />
       </View>
     </ScrollView>

@@ -203,7 +203,6 @@ export function HomeScreen({
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [apiBannerSlides, setApiBannerSlides] = useState<any[]>([]);
-  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
   const [supportWhatsapp, setSupportWhatsapp] = useState('918837684004');
   const heroImageHeight = Math.round((width - 28) * 0.56);
   const showTestimonials = appSettings?.testimonialsEnabled !== false;
@@ -258,41 +257,36 @@ export function HomeScreen({
     if (appSettings?.whatsappNumber) setSupportWhatsapp(appSettings.whatsappNumber);
   }, [appSettings]);
 
-  useEffect(() => {
+  const testimonials = useMemo<TestimonialItem[]>(() => {
     if (ctxTestimonials.length > 0) {
-      setTestimonials(
-        ctxTestimonials.map((t, index) => {
-          const themed = getTestimonialTheme(index);
-          const fallback = TESTIMONIAL_FALLBACK_COPY[index % TESTIMONIAL_FALLBACK_COPY.length];
-          return {
-            initials: t.initials ?? t.personName.slice(0, 2).toUpperCase() ?? fallback.initials,
-            name: t.personName || fallback.name,
-            location: t.location || fallback.location,
-            tier: t.tier || fallback.tier,
-            yearsWithUs:
-              t.yearsConnected != null
-                ? `Connected for ${t.yearsConnected} year${t.yearsConnected !== 1 ? 's' : ''}`
-                : fallback.yearsWithUs,
-            quote: t.quote?.trim() || fallback.quote,
-            highlight: t.highlight?.trim() || fallback.highlight,
-            colors: themed.colors,
-            ring: themed.ring,
-            glow: themed.glow,
-          };
-        })
-      );
-      return;
+      return ctxTestimonials.map((t, index) => {
+        const themed = getTestimonialTheme(index);
+        const fallback = TESTIMONIAL_FALLBACK_COPY[index % TESTIMONIAL_FALLBACK_COPY.length];
+        return {
+          initials: t.initials ?? t.personName.slice(0, 2).toUpperCase() ?? fallback.initials,
+          name: t.personName || fallback.name,
+          location: t.location || fallback.location,
+          tier: t.tier || fallback.tier,
+          yearsWithUs:
+            t.yearsConnected != null
+              ? `Connected for ${t.yearsConnected} year${t.yearsConnected !== 1 ? 's' : ''}`
+              : fallback.yearsWithUs,
+          quote: t.quote?.trim() || fallback.quote,
+          highlight: t.highlight?.trim() || fallback.highlight,
+          colors: themed.colors,
+          ring: themed.ring,
+          glow: themed.glow,
+        };
+      });
     }
 
-    setTestimonials(
-      TESTIMONIAL_FALLBACK_COPY.map((item, index) => {
-        const themed = getTestimonialTheme(index);
-        return { ...item, colors: themed.colors, ring: themed.ring, glow: themed.glow };
-      })
-    );
+    return TESTIMONIAL_FALLBACK_COPY.map((item, index) => {
+      const themed = getTestimonialTheme(index);
+      return { ...item, colors: themed.colors, ring: themed.ring, glow: themed.glow };
+    });
   }, [ctxTestimonials]);
 
-  const quickActions = [
+  const quickActions = useMemo(() => [
     {
       title: tx('Products'),
       sub: tx('Browse catalog'),
@@ -329,11 +323,14 @@ export function HomeScreen({
       onPress: () => onNavigate('wallet'),
       hidden: !showWallet,
     },
-  ].filter((item) => !item.hidden);
+  ].filter((item) => !item.hidden), [
+    tx, showProduct, showCatalog, showWhatsapp, showWallet,
+    onNavigate, openCatalog, catalogPdfUrl, supportWhatsapp,
+  ]);
 
   const homeSections = useAppPageSections('counterboy', 'home');
 
-  const renderBodySections = (): React.ReactNode[] => {
+  const bodySections = useMemo((): React.ReactNode[] => {
     if (!homeSections.length) return [];
 
     const sectionMap: Record<HomePageSectionKey, React.ReactNode | null> = {
@@ -425,7 +422,11 @@ export function HomeScreen({
       .filter((key) => key !== 'hero_banner')
       .map((key) => sectionMap[key])
       .filter(Boolean) as React.ReactNode[];
-  };
+  }, [
+    homeSections, darkMode, quickActions, cardW, pageContent, showProduct,
+    browseCategoriesFour, catCardW, showTestimonials, testimonials,
+    onNavigate, onOpenProductCategory, tx,
+  ]);
 
   const cardW = (width - 28 - 12) / 2;
   const catCardW = Math.floor((width - 28 - 12) / 2);
@@ -452,6 +453,8 @@ export function HomeScreen({
     <ScrollView
       style={[styles.screen, darkMode ? styles.screenDark : null]}
       showsVerticalScrollIndicator={false}
+      bounces={false}
+      overScrollMode="never"
     >
       {/* Hero */}
       <LinearGradient
@@ -509,7 +512,7 @@ export function HomeScreen({
       </LinearGradient>
 
       <View style={styles.body}>
-        {renderBodySections()}
+        {bodySections}
       </View>
     </ScrollView>
   );

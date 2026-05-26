@@ -79,7 +79,9 @@ export function DocumentUpload({
     });
 
     if (!result.canceled && result.assets?.length) {
-      await uploadDocument(result.assets[0].uri, 'image/jpeg', `${documentType}.jpg`);
+      const localFileUri = result.assets[0].uri;
+      setLocalUri(localFileUri);
+      await uploadDocument(localFileUri, 'image/jpeg', `${documentType}.jpg`);
     }
   };
 
@@ -97,7 +99,9 @@ export function DocumentUpload({
     });
 
     if (!result.canceled && result.assets?.length) {
-      await uploadDocument(result.assets[0].uri, 'image/jpeg', `${documentType}.jpg`);
+      const localFileUri = result.assets[0].uri;
+      setLocalUri(localFileUri);
+      await uploadDocument(localFileUri, 'image/jpeg', `${documentType}.jpg`);
     }
   };
 
@@ -111,6 +115,7 @@ export function DocumentUpload({
       if (result.canceled) return;
 
       const file = result.assets[0];
+      setLocalUri(file.uri);
       await uploadDocument(file.uri, file.mimeType || 'application/pdf', file.name);
     } catch (error) {
       Alert.alert('Error', 'Failed to pick file');
@@ -121,12 +126,12 @@ export function DocumentUpload({
     try {
       setUploading(true);
       const url = await profileApi.uploadDocument({ uri, type, name }, documentType);
-      setLocalUri(url);
       onUploadSuccess(url);
       Alert.alert('Success', 'Document uploaded successfully');
     } catch (error: any) {
       const msg = error?.message || 'Unknown error';
       Alert.alert('Upload Failed', `${msg}\n\nPlease check your connection and try again.`);
+      setLocalUri(currentUrl || null);
     } finally {
       setUploading(false);
     }

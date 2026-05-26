@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AppIcon } from '../components/ProfileShared';
 import { usePreferenceContext } from '@/shared/preferences';
@@ -15,18 +15,27 @@ type ApprovalPendingScreenProps = {
   onUseAnotherNumber?: () => void;
 };
 
-const ROLE_THEME = {
-  dealer: {
-    shell: '#F4F8FF',
-    hero: ['#F8FBFF', '#E2ECFF', '#D4E3FF'] as [string, string, string],
-    accent: '#214D99',
-    accentDeep: '#173E80',
-    soft: '#EAF3FF',
-    chip: '#DCEAFF',
-    glow: 'rgba(33,77,153,0.18)',
-    support: '#0F766E',
-  },
-} as const;
+const PENDING_THEME = {
+  shell: '#F4F8FF',
+  hero: ['#F8FBFF', '#E2ECFF', '#D4E3FF'] as [string, string, string],
+  accent: '#214D99',
+  accentDeep: '#173E80',
+  soft: '#EAF3FF',
+  chip: '#DCEAFF',
+  glow: 'rgba(33,77,153,0.18)',
+  support: '#0F766E',
+};
+
+const REJECTED_THEME = {
+  shell: '#FFF5F5',
+  hero: ['#FFF8F8', '#FFE8E8', '#FFD6D6'] as [string, string, string],
+  accent: '#C0392B',
+  accentDeep: '#922B21',
+  soft: '#FFE8E8',
+  chip: '#FFD6D6',
+  glow: 'rgba(192,57,43,0.15)',
+  support: '#0F766E',
+};
 
 function sanitizePhone(value?: string | null) {
   return String(value ?? '').replace(/[^0-9+]/g, '');
@@ -45,25 +54,27 @@ export function ApprovalPendingScreen({
   onUseAnotherNumber,
 }: ApprovalPendingScreenProps) {
   const { tx, theme } = usePreferenceContext();
-  const roleTheme = ROLE_THEME[role];
   const safePhone = sanitizePhone(supportPhone);
   const safeWhatsapp = sanitizeWhatsapp(whatsappNumber || supportPhone);
   const normalizedStatus = String(accountStatus ?? '').trim().toLowerCase();
   const isRejected = normalizedStatus === 'inactive' || normalizedStatus === 'rejected';
 
+  const T = isRejected ? REJECTED_THEME : PENDING_THEME;
   const roleLabel = 'Dealer';
+
   const statusRows = useMemo(
-      () => (isRejected
+    () =>
+      isRejected
         ? [
-        'Your account request was reviewed by admin',
-        'This dealer registration is currently rejected',
-        'Check the reason below or contact support for help',
-      ]
+            { icon: 'check' as const,   text: 'Your registration was reviewed by admin' },
+            { icon: 'alert' as const,   text: 'Account has been rejected by admin' },
+            { icon: 'message' as const, text: 'Contact support for help or clarification' },
+          ]
         : [
-        'Your account request has been received',
-        'Admin approval is required before access',
-        'You can contact support for urgent queries',
-      ]),
+            { icon: 'check' as const,   text: 'Your account request has been received' },
+            { icon: 'clock' as const,   text: 'Admin approval is required before access' },
+            { icon: 'message' as const, text: 'Contact support for urgent queries' },
+          ],
     [isRejected]
   );
 
@@ -76,318 +87,399 @@ export function ApprovalPendingScreen({
     if (!safeWhatsapp) return;
     const message = encodeURIComponent(
       isRejected
-        ? `Hello SRV Team, my ${roleLabel.toLowerCase()} account request was rejected. Please help me with the next steps.`
-        : `Hello SRV Team, my ${roleLabel.toLowerCase()} account is waiting for admin approval.`
+        ? `Hello SRV Team, my dealer account was rejected. Please help me with the next steps.`
+        : `Hello SRV Team, my dealer account is waiting for admin approval.`
     );
     void Linking.openURL(`https://wa.me/${safeWhatsapp}?text=${message}`).catch(() => {});
   };
 
   return (
-    <ScrollView
-      style={[styles.screen, { backgroundColor: roleTheme.shell }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <LinearGradient colors={roleTheme.hero} style={styles.heroCard}>
-        <View style={[styles.heroGlow, { backgroundColor: roleTheme.glow }]} />
+    <SafeAreaView style={[styles.root, { backgroundColor: T.shell }]}>
+      <View style={styles.container}>
 
-        <View style={styles.topRow}>
-          <View style={[styles.statusChip, { backgroundColor: roleTheme.chip }]}>
-            <AppIcon name="warning" size={15} color={roleTheme.accentDeep} />
-            <Text style={[styles.statusChipText, { color: roleTheme.accentDeep }]}>
-              {isRejected ? 'Rejected' : 'Approval Pending'}
-            </Text>
-          </View>
-          <View style={[styles.roleChip, { backgroundColor: '#FFFFFF' }]}>
-            <AppIcon name="building" size={15} color={roleTheme.accent} />
-            <Text style={[styles.roleChipText, { color: roleTheme.accentDeep }]}>{roleLabel}</Text>
-          </View>
-        </View>
+        {/* ── Hero card ── */}
+        <LinearGradient colors={T.hero} style={styles.heroCard}>
+          <View style={[styles.heroGlow, { backgroundColor: T.glow }]} />
 
-        <Text style={[styles.eyebrow, { color: roleTheme.accentDeep }]}>Admin Review</Text>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>
-          {isRejected
-            ? 'Your dealer account request was rejected'
-            : 'Wait for admin approval to access your account'}
-        </Text>
-        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {isRejected
-            ? `Your ${roleLabel.toLowerCase()} account is not approved right now. Please review the reason and contact support if you need help.`
-            : `Your ${roleLabel.toLowerCase()} account is created, but the next pages will unlock only after admin approval.`}
-        </Text>
-
-        {isRejected ? (
-          <View style={styles.reasonCard}>
-            <Text style={[styles.reasonLabel, { color: roleTheme.accentDeep }]}>Rejection Reason</Text>
-            <Text style={[styles.reasonValue, { color: theme.textPrimary }]}>
-              {rejectionReason?.trim() || 'Your dealer request was rejected by admin.'}
-            </Text>
-          </View>
-        ) : null}
-
-        <View style={styles.progressCard}>
-          {statusRows.map((item, index) => (
-            <View key={item} style={styles.progressRow}>
-              <View
-                style={[
-                  styles.progressIcon,
-                  { backgroundColor: index === statusRows.length - 1 ? `${roleTheme.accent}14` : roleTheme.soft },
-                ]}
-              >
-                <AppIcon
-                  name={index === statusRows.length - 1 ? 'message' : 'check'}
-                  size={13}
-                  color={roleTheme.accentDeep}
-                />
-              </View>
-              <Text style={[styles.progressText, { color: theme.textSecondary }]}>{item}</Text>
-            </View>
-          ))}
-        </View>
-      </LinearGradient>
-
-      <View style={styles.supportCard}>
-        <Text style={[styles.supportTitle, { color: theme.textPrimary }]}>Need help right now?</Text>
-        <Text style={[styles.supportCopy, { color: theme.textSecondary }]}>
-          For any queries, contact our team and we will help you with the approval status.
-        </Text>
-
-        {safePhone ? (
-          <Pressable onPress={handleCall} style={styles.infoRow}>
-            <View style={[styles.infoIcon, { backgroundColor: roleTheme.soft }]}>
-              <AppIcon name="phone" size={16} color={roleTheme.accentDeep} />
-            </View>
-            <View style={styles.infoTextWrap}>
-              <Text style={[styles.infoLabel, { color: theme.textMuted }]}>Support Number</Text>
-              <Text style={[styles.infoValue, { color: theme.textPrimary }]}>{safePhone}</Text>
-            </View>
-            <AppIcon name="chevronRight" size={18} color={roleTheme.accent} />
-          </Pressable>
-        ) : null}
-
-        {safeWhatsapp ? (
-          <Pressable onPress={handleWhatsapp} style={styles.buttonShell}>
-            <LinearGradient colors={['#16A34A', roleTheme.support]} style={styles.whatsappButton}>
-              <AppIcon name="whatsapp" size={18} color="#FFFFFF" />
-              <Text style={styles.whatsappButtonText}>{tx('Chat on WhatsApp')}</Text>
-            </LinearGradient>
-          </Pressable>
-        ) : null}
-
-        {onUseAnotherNumber ? (
-          <Pressable onPress={onUseAnotherNumber} style={styles.secondaryShell}>
-            <View style={[styles.secondaryButton, { borderColor: `${roleTheme.accent}30` }]}>
-              <AppIcon name="chevronLeft" size={16} color={roleTheme.accent} />
-              <Text style={[styles.secondaryText, { color: roleTheme.accentDeep }]}>
-                {tx('Use another number')}
+          {/* Top chips */}
+          <View style={styles.topRow}>
+            <View style={[styles.statusChip, { backgroundColor: T.chip }]}>
+              <AppIcon name={isRejected ? 'alert' : 'warning'} size={12} color={T.accentDeep} />
+              <Text style={[styles.chipText, { color: T.accentDeep }]}>
+                {isRejected ? 'Rejected' : 'Approval Pending'}
               </Text>
             </View>
-          </Pressable>
-        ) : null}
+            <View style={[styles.roleChip, { backgroundColor: '#FFFFFF' }]}>
+              <AppIcon name="building" size={12} color={T.accent} />
+              <Text style={[styles.chipText, { color: T.accentDeep }]}>{roleLabel}</Text>
+            </View>
+          </View>
+
+          {/* Title block */}
+          <View style={styles.titleBlock}>
+            <Text style={[styles.eyebrow, { color: T.accentDeep }]}>
+              {isRejected ? 'Registration Rejected' : 'Admin Review'}
+            </Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>
+              {isRejected
+                ? 'Your dealer account\nwas rejected'
+                : 'Waiting for admin\napproval'}
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+              {isRejected
+                ? `Your ${roleLabel.toLowerCase()} registration was reviewed and rejected. See the reason below and contact support if you need help.`
+                : `Your ${roleLabel.toLowerCase()} account is created. The app will unlock fully once admin approves your account.`}
+            </Text>
+          </View>
+
+          {/* Rejection reason */}
+          {isRejected ? (
+            <View style={[styles.reasonBox, { borderColor: T.chip }]}>
+              <Text style={[styles.reasonLabel, { color: T.accentDeep }]}>Rejection Reason</Text>
+              <Text style={[styles.reasonText, { color: theme.textPrimary }]}>
+                {rejectionReason?.trim() || 'Rejected by admin. Contact support for details.'}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Status steps */}
+          <View style={[styles.stepsCard, isRejected && { backgroundColor: '#FFF4F4' }]}>
+            <Text style={[styles.stepsHeading, { color: T.accentDeep }]}>
+              {isRejected ? 'What happened' : 'What to expect'}
+            </Text>
+            <View style={styles.stepsList}>
+              {statusRows.map((item, index) => (
+                <View key={item.text} style={styles.stepRow}>
+                  <View style={[styles.stepIcon, { backgroundColor: index === 1 && isRejected ? `${T.accent}20` : T.soft }]}>
+                    <AppIcon name={item.icon} size={12} color={T.accentDeep} />
+                  </View>
+                  <Text style={[styles.stepText, { color: theme.textSecondary }]}>{item.text}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Info note */}
+            <View style={[styles.noteRow, { backgroundColor: T.soft }]}>
+              <AppIcon name="info" size={12} color={T.accentDeep} />
+              <Text style={[styles.noteText, { color: T.accentDeep }]}>
+                {isRejected
+                  ? 'You may contact our support team to understand the rejection and discuss next steps.'
+                  : 'Approval usually takes 1–2 business days. You will be notified once approved.'}
+              </Text>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* ── Support card ── */}
+        <View style={[styles.supportCard, { backgroundColor: theme.surface ?? '#FFFFFF' }]}>
+          <Text style={[styles.supportTitle, { color: theme.textPrimary }]}>
+            {isRejected ? 'Need help?' : 'Need help right now?'}
+          </Text>
+
+          <View style={styles.actionRow}>
+            {safePhone ? (
+              <Pressable onPress={handleCall} style={[styles.callBtn, { backgroundColor: T.soft }]}>
+                <AppIcon name="phone" size={14} color={T.accentDeep} />
+                <Text style={[styles.callBtnText, { color: T.accentDeep }]}>Call Us</Text>
+              </Pressable>
+            ) : null}
+
+            {safeWhatsapp ? (
+              <Pressable onPress={handleWhatsapp} style={styles.waShell}>
+                <LinearGradient colors={['#22C55E', '#16A34A']} style={styles.waBtn}>
+                  <AppIcon name="whatsapp" size={14} color="#FFFFFF" />
+                  <Text style={styles.waBtnText}>{tx('Chat on WhatsApp')}</Text>
+                </LinearGradient>
+              </Pressable>
+            ) : null}
+          </View>
+
+          {onUseAnotherNumber ? (
+            <Pressable onPress={onUseAnotherNumber} style={styles.anotherShell}>
+              <View style={[styles.anotherBtn, { borderColor: `${T.accent}25` }]}>
+                <AppIcon name="chevronLeft" size={12} color={T.accent} />
+                <Text style={[styles.anotherBtnText, { color: T.accentDeep }]}>
+                  {tx('Use another number')}
+                </Text>
+              </View>
+            </Pressable>
+          ) : null}
+        </View>
+
+        {/* ── Website promo ── */}
+        <Pressable
+          onPress={() => Linking.openURL('https://srvelectricals.com').catch(() => {})}
+          style={[styles.websiteCard, { backgroundColor: theme.surface ?? '#FFFFFF' }]}
+        >
+          <View style={[styles.websiteIconBubble, { backgroundColor: T.soft }]}>
+            <Image
+              source={require('../../../../assets/srv-logo.png')}
+              style={styles.websiteLogo}
+              resizeMode="contain"
+            />
+          </View>
+          <View style={styles.websiteContent}>
+            <Text style={[styles.websiteLabel, { color: theme.textSecondary }]}>
+              Don't get bored — check out our website for exciting new products!
+            </Text>
+            <Text style={[styles.websiteUrl, { color: T.accent }]}>
+              srvelectricals.com →
+            </Text>
+          </View>
+        </Pressable>
+
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
-    gap: 14,
+  root: {
+    flex: 1,
   },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
+    gap: 10,
+  },
+
+  /* Hero */
   heroCard: {
-    borderRadius: 30,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 18,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 14,
     overflow: 'hidden',
-    ...createShadow({ color: '#0F172A', offsetY: 12, blur: 24, opacity: 0.09, elevation: 6 }),
+    gap: 10,
+    ...createShadow({ color: '#0F172A', offsetY: 8, blur: 18, opacity: 0.06, elevation: 4 }),
   },
   heroGlow: {
     position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    top: -72,
-    right: -42,
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    top: -60,
+    right: -40,
   },
   topRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
   },
   statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 4,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 5,
     borderRadius: 999,
-  },
-  statusChipText: {
-    fontSize: 12,
-    fontWeight: '900',
   },
   roleChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 4,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 5,
     borderRadius: 999,
   },
-  roleChipText: {
-    fontSize: 12,
+  chipText: {
+    fontSize: 10,
     fontWeight: '800',
+  },
+
+  /* Title block */
+  titleBlock: {
+    gap: 4,
   },
   eyebrow: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '900',
-    letterSpacing: 1.3,
+    letterSpacing: 1.2,
     textTransform: 'uppercase',
-    marginBottom: 6,
   },
   title: {
-    fontSize: 26,
-    lineHeight: 30,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '900',
-    maxWidth: 280,
   },
   subtitle: {
-    marginTop: 8,
     fontSize: 12,
-    lineHeight: 18,
-    maxWidth: 290,
+    lineHeight: 17,
   },
-  progressCard: {
-    marginTop: 14,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  progressIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
-  },
-  reasonCard: {
-    marginTop: 14,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    backgroundColor: '#FFFFFFCC',
+
+  /* Reason box */
+  reasonBox: {
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#DCEAFF',
-    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFFCC',
+    gap: 3,
   },
   reasonLabel: {
-    fontSize: 11,
+    fontSize: 9,
     fontWeight: '900',
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 0.7,
   },
-  reasonValue: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
+  reasonText: {
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '600',
   },
-  supportCard: {
-    borderRadius: 28,
+
+  /* Steps card */
+  stepsCard: {
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    gap: 12,
-    ...createShadow({ color: '#0F172A', offsetY: 10, blur: 22, opacity: 0.08, elevation: 5 }),
+    borderRadius: 18,
+    paddingHorizontal: 13,
+    paddingVertical: 11,
+    gap: 8,
+  },
+  stepsHeading: {
+    fontSize: 10,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.7,
+  },
+  stepsList: {
+    gap: 6,
+  },
+  stepRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  stepIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: '600',
+  },
+  noteRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 7,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  noteText: {
+    flex: 1,
+    fontSize: 10,
+    lineHeight: 15,
+    fontWeight: '600',
+  },
+
+  /* Support card */
+  supportCard: {
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    gap: 9,
+    ...createShadow({ color: '#0F172A', offsetY: 6, blur: 14, opacity: 0.06, elevation: 3 }),
   },
   supportTitle: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '900',
   },
-  supportCopy: {
-    fontSize: 13,
-    lineHeight: 19,
+  actionRow: {
+    flexDirection: 'row',
+    gap: 9,
   },
-  infoRow: {
+  callBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#FAFBFF',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+    borderRadius: 12,
   },
-  infoIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  infoTextWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  infoLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  infoValue: {
-    fontSize: 15,
+  callBtnText: {
+    fontSize: 12,
     fontWeight: '800',
   },
-  buttonShell: {
-    borderRadius: 20,
+  waShell: {
+    flex: 1,
+    borderRadius: 12,
     overflow: 'hidden',
   },
-  whatsappButton: {
-    minHeight: 52,
-    borderRadius: 20,
+  waBtn: {
+    height: 42,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 7,
   },
-  whatsappButtonText: {
+  waBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
+    fontSize: 12,
+    fontWeight: '800',
   },
-  secondaryShell: {
-    marginTop: 2,
+  anotherShell: {
+    marginTop: 1,
   },
-  secondaryButton: {
-    minHeight: 48,
-    borderRadius: 18,
+  anotherBtn: {
+    height: 36,
+    borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 4,
     backgroundColor: '#FFFFFF',
   },
-  secondaryText: {
-    fontSize: 14,
+  anotherBtnText: {
+    fontSize: 12,
     fontWeight: '800',
+  },
+
+  /* Website promo */
+  websiteCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    gap: 12,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    ...createShadow({ color: '#0F172A', offsetY: 4, blur: 10, opacity: 0.04, elevation: 2 }),
+  },
+  websiteIconBubble: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  websiteLogo: {
+    width: 24,
+    height: 24,
+  },
+  websiteContent: {
+    flex: 1,
+    gap: 3,
+  },
+  websiteLabel: {
+    fontSize: 11,
+    lineHeight: 15,
+    fontWeight: '600',
+  },
+  websiteUrl: {
+    fontSize: 14,
+    fontWeight: '900',
   },
 });
