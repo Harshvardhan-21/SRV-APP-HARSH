@@ -745,8 +745,6 @@ export function OnboardingScreen({
   const dealerAutoAddressRequestedRef = useRef(false);
   const electricianAddressAutoRequestedRef = useRef(false);
   const electricianPhoneAutoRequestedRef = useRef(false);
-  const electricianDealerAutoAdvanceRef = useRef(false);
-
   const resolvedInitialPhase = initialPhase ?? (fixedRole ? 'auth' : 'language');
   const [phase, setPhase] = useState<IntroStep>(resolvedInitialPhase);
   const [mode, setMode] = useState<AuthMode>(initialMode);
@@ -790,7 +788,6 @@ export function OnboardingScreen({
   const [verifiedDealerNextSerial, setVerifiedDealerNextSerial] = useState('001');
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
-  const [showAddressModal, setShowAddressModal] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const keyboardHeightRef = useRef(0);
   const isCompactPhone = width <= 360 || height <= 760;
@@ -1058,22 +1055,7 @@ export function OnboardingScreen({
     electricianPhoneAutoRequestedRef.current = true;
   }, [mode, role, signupPhone, signupStep]);
 
-  useEffect(() => {
-    if (
-      mode !== 'signup' ||
-      role !== 'electrician' ||
-      signupStep !== 'address' ||
-      !locationMessage ||
-      signupAddress.trim().length < 5 ||
-      electricianDealerAutoAdvanceRef.current
-    ) {
-      return;
-    }
 
-    electricianDealerAutoAdvanceRef.current = true;
-    const timer = setTimeout(() => setSignupStep('dealer'), 250);
-    return () => clearTimeout(timer);
-  }, [locationMessage, mode, role, signupAddress, signupStep]);
 
   useEffect(() => {
     if (loginOtpCountdown <= 0) return;
@@ -1133,7 +1115,6 @@ export function OnboardingScreen({
     dealerAutoAddressRequestedRef.current = false;
     electricianAddressAutoRequestedRef.current = false;
     electricianPhoneAutoRequestedRef.current = false;
-    electricianDealerAutoAdvanceRef.current = false;
     setErrors({});
     setLoading(false);
     setShowPassword(false);
@@ -1758,6 +1739,15 @@ export function OnboardingScreen({
       if (signupAddress.trim().length < 5)
         return setError('signupAddress', 'Please fill the address field.');
       setError('signupAddress');
+      if (role === 'electrician') {
+        if (signupState.trim().length < 2) return setError('signupState', 'Please enter state.');
+        if (signupCity.trim().length < 2) return setError('signupCity', 'Please enter city.');
+        if (signupPincode.trim().length < 4)
+          return setError('signupPincode', 'Please enter a valid pincode.');
+        setError('signupState');
+        setError('signupCity');
+        setError('signupPincode');
+      }
       setSignupStep(role === 'electrician' ? 'dealer' : 'password');
       return;
     }
@@ -2941,31 +2931,46 @@ export function OnboardingScreen({
                             {signupStep === 'address' && locationMessage ? (
                               <Info text={locationMessage} kind="success" />
                             ) : null}
-                            {['address', 'dealer', 'otp', 'password'].includes(signupStep) &&
-                            (signupState || signupCity || signupPincode) ? (
-                              <View style={s.locationSummaryCard}>
-                                <Text style={s.locationSummaryTitle}>
-                                  {tx('Detected Location Details')}
-                                </Text>
-                                {signupState ? (
-                                  <View style={s.locationRow}>
-                                    <Text style={s.locationKey}>{tx('State')}</Text>
-                                    <Text style={s.locationValue}>{signupState}</Text>
-                                  </View>
-                                ) : null}
-                                {signupCity ? (
-                                  <View style={s.locationRow}>
-                                    <Text style={s.locationKey}>{tx('City')}</Text>
-                                    <Text style={s.locationValue}>{signupCity}</Text>
-                                  </View>
-                                ) : null}
-                                {signupPincode ? (
-                                  <View style={s.locationRow}>
-                                    <Text style={s.locationKey}>{tx('Pincode')}</Text>
-                                    <Text style={s.locationValue}>{signupPincode}</Text>
-                                  </View>
-                                ) : null}
-                              </View>
+                            {signupStep === 'address' ? (
+                              <>
+                                <Field
+                                  label={tx('State')}
+                                  value={signupState}
+                                  onChangeText={handleName(setSignupState)}
+                                  placeholder={tx('State')}
+                                  error={errors.signupState}
+                                  onFocus={scrollToForm}
+                                  inputRef={signupStateRef}
+                                  returnKeyType="next"
+                                  blurOnSubmit={false}
+                                  onSubmitEditing={() => signupCityRef.current?.focus()}
+                                />
+                                <Field
+                                  label={tx('City')}
+                                  value={signupCity}
+                                  onChangeText={handleName(setSignupCity)}
+                                  placeholder={tx('City')}
+                                  error={errors.signupCity}
+                                  onFocus={scrollToForm}
+                                  inputRef={signupCityRef}
+                                  returnKeyType="next"
+                                  blurOnSubmit={false}
+                                  onSubmitEditing={() => signupPincodeRef.current?.focus()}
+                                />
+                                <Field
+                                  label={tx('Pincode')}
+                                  value={signupPincode}
+                                  onChangeText={(value) =>
+                                    setSignupPincode(value.replace(/\D/g, '').slice(0, 6))
+                                  }
+                                  placeholder={tx('Pincode')}
+                                  keyboardType="numeric"
+                                  error={errors.signupPincode}
+                                  onFocus={scrollToForm}
+                                  inputRef={signupPincodeRef}
+                                  onSubmitEditing={continueSignup}
+                                />
+                              </>
                             ) : null}
                             {signupStep === 'address' ? (
                               <Button
@@ -3151,64 +3156,7 @@ export function OnboardingScreen({
         </KeyboardAvoidingView>
       </LinearGradient>
 
-      {showAddressModal ? (
-        <View style={s.modalOverlay}>
-          <View style={s.modalCard}>
-            <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>{tx('Enter Address Manually')}</Text>
-              <Pressable onPress={() => setShowAddressModal(false)} style={s.modalClose}>
-                <Text style={s.modalCloseText}>X</Text>
-              </Pressable>
-            </View>
-            <View style={s.modalField}>
-              <Text style={s.modalLabel}>{tx('City')}</Text>
-              <TextInput
-                style={s.modalInput}
-                value={signupCity}
-                onChangeText={(v) => {
-                  const t = v.replace(/[^A-Za-z ]/g, '');
-                  setSignupCity(t);
-                  setSignupAddress(`${t}, ${signupState}, ${signupPincode}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','));
-                }}
-                placeholder={tx('Enter city')}
-                placeholderTextColor="#90A0BB"
-              />
-            </View>
-            <View style={s.modalField}>
-              <Text style={s.modalLabel}>{tx('State')}</Text>
-              <TextInput
-                style={s.modalInput}
-                value={signupState}
-                onChangeText={(v) => {
-                  const t = v.replace(/[^A-Za-z ]/g, '');
-                  setSignupState(t);
-                  setSignupAddress(`${signupCity}, ${t}, ${signupPincode}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','));
-                }}
-                placeholder={tx('Enter state')}
-                placeholderTextColor="#90A0BB"
-              />
-            </View>
-            <View style={s.modalField}>
-              <Text style={s.modalLabel}>{tx('Pincode')}</Text>
-              <TextInput
-                style={s.modalInput}
-                value={signupPincode}
-                onChangeText={(v) => {
-                  const t = v.replace(/\D/g, '').slice(0, 6);
-                  setSignupPincode(t);
-                  setSignupAddress(`${signupCity}, ${signupState}, ${t}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','));
-                }}
-                placeholder={tx('Enter 6-digit pincode')}
-                keyboardType="numeric"
-                placeholderTextColor="#90A0BB"
-              />
-            </View>
-            <Pressable style={s.modalBtn} onPress={() => setShowAddressModal(false)}>
-              <Text style={s.modalBtnText}>{tx('Done')}</Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : null}
+
     </View>
   );
 }
@@ -3747,29 +3695,6 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   skipBtnText: { color: C.accentA, fontSize: 13, fontWeight: '800' },
-  locationSummaryCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#D7E4F4',
-    backgroundColor: '#F7FAFF',
-    padding: 12,
-    gap: 8,
-  },
-  locationSummaryTitle: {
-    color: C.title,
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  locationKey: { flex: 1, color: C.muted2, fontSize: 12, fontWeight: '700' },
-  locationValue: { flex: 1, color: C.text, fontSize: 12.5, fontWeight: '800', textAlign: 'right' },
   shell: {
     height: 52,
     borderRadius: 16,
@@ -3899,70 +3824,11 @@ const s = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkboxOn: { backgroundColor: C.primary, borderColor: C.primary },
-  checkboxCardActive: { borderColor: C.primary },
+  checkboxOn: { backgroundColor: C.accentB, borderColor: C.accentB },
+  checkboxCardActive: { borderColor: C.accentB },
   check: { color: '#FFFFFF', fontSize: 13, fontWeight: '900' },
   checkboxText: { flex: 1, color: C.text, fontSize: 12, lineHeight: 19, fontWeight: '500' },
   checkboxLink: { color: C.accentA, fontWeight: '700', textDecorationLine: 'underline' },
-  modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  modalCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 20,
-    width: '88%',
-    maxWidth: 340,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  modalTitle: { fontSize: 17, fontWeight: '900', color: C.title },
-  modalClose: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F1F6FD',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseText: { fontSize: 14, fontWeight: '800', color: C.muted },
-  modalField: { marginBottom: 14 },
-  modalLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: C.muted2,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 6,
-  },
-  modalInput: {
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#D8E7FB',
-    paddingHorizontal: 14,
-    fontSize: 15,
-    fontWeight: '600',
-    color: C.text,
-    backgroundColor: '#F9FBFE',
-  },
-  modalBtn: {
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: C.accentA,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  modalBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '900' },
   otpResendRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4, marginBottom: 8 },
   otpTimer: { color: C.error, fontSize: 12, fontWeight: '800' },
   otpResend: { color: C.accentA, fontSize: 12, fontWeight: '800' },

@@ -360,7 +360,7 @@ export function UserAuthScreen({
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('conflict')) {
-        Alert.alert(tx('Already Registered'), tx('This phone number is already registered. Please login instead.'));
+        Alert.alert(tx('Already Registered'), msg || tx('This phone number is already registered. Please login instead.'));
         setMode('login');
       } else {
         Alert.alert(tx('Error'), msg || tx('Failed to send OTP'));
@@ -482,7 +482,7 @@ export function UserAuthScreen({
     } catch (e: any) {
       const msg = e?.message ?? '';
       if (msg.toLowerCase().includes('already registered') || msg.toLowerCase().includes('conflict')) {
-        Alert.alert(tx('Already Registered'), tx('This phone number is already registered. Please login instead.'));
+        Alert.alert(tx('Already Registered'), msg || tx('This phone number is already registered. Please login instead.'));
         setMode('login');
       } else {
         Alert.alert(tx('Registration Failed'), msg || tx('Could not create account. Please try again.'));
